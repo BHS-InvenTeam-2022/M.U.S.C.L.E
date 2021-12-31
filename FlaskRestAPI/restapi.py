@@ -36,17 +36,17 @@ class EggModel(db.Model):
     ph_id = db.Column(db.Integer, nullable=False)
     ph_data = db.Column(db.Float, nullable=False)
     clock_id = db.Column(db.Integer, nullable=False)
-    clock_data = db.Column(db.DateTime, nullable=False)
+    clock_data = db.Column(db.String(25), nullable=False)
     salinity_id = db.Column(db.Integer, nullable=False)
     salinity_data = db.Column(db.Float, nullable=False)
     data_packet = db.Column(db.String, nullable=False)
     clock_packet = db.Column(db.String, nullable=False)
 
     def __repr__(self):
-        return f"Egg Data(eggId={EggModel.eggId}, temp={EggModel.temp_data}, ph={EggModel.ph_data}, time={EggModel.clock_data}, salinity={EggModel.salinity_data})"  # type: ignore
+        return f"Egg Data(eggId={EggModel.eggId}, temp={EggModel.temp_data}, ph={EggModel.ph_data}, time={EggModel.clock_data}, salinity={EggModel.salinity_data})"
 
 
-#db.create_all()  # only done once so once initialized remove
+db.create_all()  # only done once so once initialized remove
 
 
 user_post_args = reqparse.RequestParser()
@@ -103,7 +103,7 @@ egg_resource_fields = {
     "ph_id": fields.Integer,
     "ph_data": fields.Float,
     "clock_id": fields.Integer,
-    "clock_data": fields.DateTime,
+    "clock_data": fields.String,
     "salinity_id": fields.Integer,
     "salinity_data": fields.Float,
     "data_packet": fields.String,
