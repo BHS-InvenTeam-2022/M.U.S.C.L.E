@@ -12,6 +12,16 @@ function validate() {
     response.send();
     response.onload = (e) => {
         console.log(response);
+        if(response.status == 200){
+            serverresponse = JSON.parse(response.response);
+            sessionStorage.setItem("username",serverresponse.username);
+            sessionStorage.setItem("eggId",serverresponse.eggId);
+            sessionStorage.setItem("eggnames",serverresponse.eggnames);
+            window.location.href = "./chart.html";
+        }else{
+            alert(JSON.parse(response.response).message);
+            return;
+        }
     }
 
 

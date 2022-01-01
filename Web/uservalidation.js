@@ -21,7 +21,7 @@ function validate() {
 
     response.onload = (e) => {
         console.log(response.response);
-        window.location.href = "./chart.html"
+        window.location.href = "./login.html";
     }
 
 
