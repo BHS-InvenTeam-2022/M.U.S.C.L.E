@@ -117,6 +117,14 @@ def check_valid(*argv):
             return False
     return True
 
+def g_list(data):
+    chars = []
+    for x in data:
+        chars.append(x)
+        if chars[-1]==";":
+            yield ''.join(chars[:-1])
+            chars = []
+    yield ''.join(chars)
 
 class User(Resource):
     @marshal_with(user_resource_fields)
@@ -197,7 +205,6 @@ class Egg(Resource):
 
     @marshal_with(egg_resource_fields)
     def post(self):
-        index = 0
         args = request.data
         args = json.loads(args)
 
@@ -211,7 +218,7 @@ class Egg(Resource):
                 return "", 201
             result = EggModel.query.filter_by(
                 eggId=args["eggId"],
-                clock_data=datetime.fromisoformat(args["clock_data"].strip("\r")),
+                clock_data=args["clock_data"].strip("\r")
             ).first()
             if not result:
                 newpoint = EggModel(
@@ -221,7 +228,7 @@ class Egg(Resource):
                     ph_id=args["ph_id"],
                     ph_data=args["ph_data"],
                     clock_id=args["clock_id"],
-                    clock_data=datetime.fromisoformat(args["clock_data"].strip("\r")),
+                    clock_data=args["clock_data"].strip("\r"),
                     salinity_id=args["salinity_id"],
                     salinity_data=args["salinity_data"],
                     data_packet="",
@@ -233,41 +240,62 @@ class Egg(Resource):
             else:
                 return "", 201
 
-        clock_data = args["clock_data"].split(";")
-        temp_data = args["temp_data"].split(";")
-        ph_data = args["ph_data"].split(";")
-        salinity_data = args["salinity_data"].split(";")
+
+        clock_data = g_list(args["clock_data"])
+        len_data = len(list(clock_data))
+        clock_data = g_list(args["clock_data"])
+        temp_data = g_list(args["temp_data"])
+        ph_data = g_list(args["ph_data"])
+        salinity_data = g_list(args["salinity_data"])
         tmp_eggId = args["eggId"]
 
-        counter = 0
-        for i in range(index, len(clock_data)):
-
-            if not check_valid(
-                temp_data[i], ph_data[i], clock_data[i], salinity_data[i]
-            ):
-                continue
-            result = EggModel.query.filter_by(
-                eggId=tmp_eggId,
-                clock_data=datetime.fromisoformat(clock_data[i].strip("\r")),
-            ).first()
+        index = 0
+        if len(EggModel.query.filter_by(eggId=tmp_eggId,).all()) > 1:
+            result = EggModel.query.filter_by(eggId=tmp_eggId).all()[-1]
             if result:
+                for i in range(len_data):
+                    index += 1
+                    t_temp_data = next(temp_data)
+                    t_ph_data = next(ph_data)
+                    t_salinity_data = next(salinity_data)
+                    if next(clock_data) > result.clock_data:
+                        break
+
+        len_data -= index        
+
+        counter = 0
+        then  = datetime.now()
+        for i in range(len_data):
+            t_clock_data = next(clock_data)
+            t_temp_data = next(temp_data)
+            t_ph_data = next(ph_data)
+            t_salinity_data = next(salinity_data)
+
+            if not check_valid(t_clock_data, t_temp_data, t_ph_data, t_salinity_data):
                 continue
 
             newpoint = EggModel(
                 eggId=tmp_eggId,
                 temp_id=args["temp_id"],
-                temp_data=temp_data[i],
+                temp_data=t_temp_data,
                 ph_id=args["ph_id"],
-                ph_data=ph_data[i],
+                ph_data=t_ph_data,
                 clock_id=args["clock_id"],
-                clock_data=datetime.fromisoformat(clock_data[i].strip("\r")),
+                clock_data=datetime.fromisoformat(t_clock_data.strip("\r")),
                 salinity_id=args["salinity_id"],
-                salinity_data=salinity_data[i],
+                salinity_data=t_salinity_data,
                 data_packet="",
                 clock_packet="",
             )
             db.session.add(newpoint)
             counter += 1
+            if counter%10000 == 0:
+                now  = datetime.now()#remove this timer later
+                duration = now - then
+                print(counter)
+                print(duration.total_seconds())
+                then = datetime.now()
+                db.session.commit()
 
         db.session.commit()
         print(counter)
