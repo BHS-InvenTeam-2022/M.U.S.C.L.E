@@ -22,6 +22,8 @@ type HttpMessage struct {
 	Msg  string `json:"message"`
 }
 
+//w.WriteHeader(int)  used to write the status code have to add to all endpoints
+
 func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to the HomePage!")
 	fmt.Println("Endpoint Hit: homePage")
@@ -37,10 +39,12 @@ func userInfo(w http.ResponseWriter, r *http.Request) {
 	urlParams := r.URL.Query()
 
 	if len(urlParams["username"]) == 0 {
+		w.WriteHeader(400)
 		errormsg := HttpMessage{Code: 400, Msg: "username must be provided"}
 		json.NewEncoder(w).Encode(errormsg)
 		return
 	} else if len(urlParams["password"]) == 0 {
+		w.WriteHeader(400)
 		errormsg := HttpMessage{Code: 400, Msg: "password must be provided"}
 		json.NewEncoder(w).Encode(errormsg)
 		return
@@ -49,15 +53,19 @@ func userInfo(w http.ResponseWriter, r *http.Request) {
 
 	person := dbinterface.SearchForPerson(db, username)
 	if person.Id == 0 {
+		w.WriteHeader(404)
 		errormsg := HttpMessage{Code: 404, Msg: "user doesn't exist"}
 		json.NewEncoder(w).Encode(errormsg)
 		return
 	}
 	if urlParams["password"][0] != person.Password {
+		w.WriteHeader(403)
 		errormsg := HttpMessage{Code: 403, Msg: "password is incorrect"}
 		json.NewEncoder(w).Encode(errormsg)
 		return
 	}
+
+	w.WriteHeader(200)
 	json.NewEncoder(w).Encode(person)
 }
 func userCreate(w http.ResponseWriter, r *http.Request) {
