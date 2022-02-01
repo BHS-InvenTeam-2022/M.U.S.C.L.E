@@ -1,7 +1,8 @@
-const url = 'http://127.0.0.1:5000/user';
+const url = 'http://127.0.0.1:8000/user';
 function validate() {
     var username = document.getElementById("username").value;
     var password = document.getElementById("password").value;
+    var email = document.getElementById("email").value;
 
     const response = new XMLHttpRequest();
 
@@ -9,8 +10,8 @@ function validate() {
         "username": username,
         "password": password,
         "eggId":username+"1",
-        "eggnames":"myprecious"
-
+        "eggnames":"myprecious",
+        "email": email
     }
     );
 

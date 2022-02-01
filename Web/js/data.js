@@ -1,5 +1,5 @@
 let fileContent;
-const url = 'http://127.0.0.1:5000/egg';
+const url = 'http://127.0.0.1:8000/egg';
 var myChart;
 
 document.getElementById('datainputbtn').addEventListener('change', function (e) {
@@ -19,44 +19,22 @@ function parseforapi(datastring) {
         alert("cannot send empyty message");
     }
     if(sessionStorage){
-        if(!sessionStorage.getItem("username")){
+        if(!sessionStorage.getItem("Username")){
             alert("not logged in yet...");
             return;
         }
     }
 
-    let temp = "";
-    let ph = "";
-    let salinity = "";
-    let clock = "";
-    let lines = datastring.split("\n");
-    let username = sessionStorage.getItem("eggId");
-
-    for (let i = 0; i < lines.length; i++) {
-        let nums = lines[i].split(";");
-        temp += nums[0] + ";";
-        ph += nums[1] + ";";
-        salinity += nums[2] + ";";
-
-        clock += nums[3].slice(0, 20) + ";";
-
-    }
+    
+    let username = sessionStorage.getItem("EggId");
+    
 
 
     const response = new XMLHttpRequest();
 
     const data = JSON.stringify({
         'eggId': username,
-        'temp_id': "1",
-        'temp_data': temp,
-        'ph_id': "1",
-        'ph_data': ph,
-        'clock_id': "1",
-        'clock_data': clock,
-        'salinity_id': "1",
-        'salinity_data': salinity,
-        "data_packet": [],
-        "clock_packet": []
+        'data': datastring        
     }
     );
 
@@ -74,13 +52,13 @@ function parseforapi(datastring) {
 
 function getchoice() {    
     if(sessionStorage){
-        if(!sessionStorage.getItem("username")){
+        if(!sessionStorage.getItem("Username")){
             alert("not logged in yet...");
             return;
         }
     }
     let ele = document.getElementsByName('datatype');
-    let eggId = sessionStorage.getItem("eggId");
+    let eggId = sessionStorage.getItem("EggId");
     let datatype;
     for (i = 0; i < ele.length; i++) {
         if (ele[i].checked)
@@ -106,19 +84,26 @@ function getchoice() {
     response.send();
     response.onload = (e) => {
         data = JSON.parse(response.response);
+
+        
         if (data) {
+
             let starti = null;
             let endi = null;
-            let clock_x = data.clock_packet.slice(1, -1).split(",");
+            let clock_x = data.clock_data.split(";");
+            clock_x.pop() //last lement always null       
             clock_x = clock_x.map(function (ele) {
-                ele = ele.slice(1, -1)
-                return ele.replace("'", '');
+                ele = ele.slice(0, -1)
+                return ele
             });
-            console.log(clock_x);
-            let data_y = data.data_packet.slice(1, -1).split(",");
+            
+            
+            let data_y = data.data.split(";");
+            data_y.pop() //last elemtn always null            
             data_y = data_y.map(function (ele) {
                 return parseFloat(ele);
             });
+            
 
             document.getElementById('date-range').textContent = `date range is from ${clock_x[0]} to ${clock_x[clock_x.length - 1]}`;
 
@@ -140,7 +125,7 @@ function getchoice() {
                     startstop = true;
                 } else if (element.valueOf() >= enddate.valueOf() && !endstop) {
                     endi = i;
-                    endstop = false;
+                    endstop = true;
                 }
             }
             if (!starti || !endi) {
@@ -151,6 +136,8 @@ function getchoice() {
                 alert("startdate is equal to or greater than end date and that's just not possible");
                 return;
             }
+            console.log(starti)
+            console.log(endi)
             clock_x = clock_x.slice(starti, endi);
             data_y = data_y.slice(starti, endi);
             chartIt(clock_x, data_y);
@@ -159,7 +146,7 @@ function getchoice() {
             alert("no data was recieved");
             return;
         }
-
+        
     }
 
 }

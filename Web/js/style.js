@@ -8,8 +8,8 @@ toggleButton.addEventListener('click',()=>{
 window.onload = function userRegister() {
     const loginbtn = document.getElementById("login-btn").firstChild;
     if(sessionStorage){
-        if(sessionStorage.getItem("username")){
-            loginbtn.textContent = sessionStorage.getItem("username");
+        if(sessionStorage.getItem("Username")){
+            loginbtn.textContent = sessionStorage.getItem("Username");
             loginbtn.href = "javascript:void(0)";
         }
     }
