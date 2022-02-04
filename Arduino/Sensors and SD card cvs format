@@ -19,6 +19,8 @@ DallasTemperature sensors(&oneWire);
 float Celcius = 0;
 float Fahrenheit = 0;
 //Clock Module
+//https://create.arduino.cc/projecthub/MisterBotBreak/how-to-use-a-real-time-clock-module-ds3231-bc90fe
+//above for clock library in case it doesn't work
 #include <Wire.h>
 #include <ds3231.h>
 
