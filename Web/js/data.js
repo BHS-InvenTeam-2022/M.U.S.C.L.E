@@ -157,6 +157,18 @@ function chartIt(xs, ys) {
     if (myChart) {
         myChart.destroy();
     }
+    const plugin = {
+        id: 'custom_canvas_background_color',
+        beforeDraw: (chart) => {
+          const ctx = chart.canvas.getContext('2d');
+          ctx.save();
+          ctx.globalCompositeOperation = 'destination-over';
+          ctx.fillStyle = 'rgb(157, 235, 226)';
+          ctx.fillRect(0, 0, chart.width, chart.height);
+          ctx.restore();
+        }
+      };
+
     myChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -164,8 +176,8 @@ function chartIt(xs, ys) {
             datasets: [{
                 label: 'Global Average Temperature',
                 data: ys,
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: 'rgba(59, 137, 255, 0.2)',
+                borderColor: 'rgba(59, 137, 255)',
                 borderWidth: 1
             }]
         },
@@ -175,7 +187,8 @@ function chartIt(xs, ys) {
                     beginAtZero: false
                 }
             }
-        }
+        },
+        plugins: [plugin],
     });
 
 
