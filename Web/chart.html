@@ -6,49 +6,72 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./styles/style.css">
+    <link rel="stylesheet" href="./styles/chartpage.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
     <script src="./js/style.js" defer></script>
     <script src="./js/data.js" defer></script>
-    <title>About Us</title>    
+    <title>About Us</title>
 </head>
 
 <body>
-    
+
     <!--Nav Bar-->
     <nav class="navbar">
-		<div class="brand-title">L-MIT InvenTeam</div>
-		<a href="#" class="toggle-button"> <span class="bar"></span> <span class="bar"></span> <span class="bar"></span> </a>
-		<div class="navbar-links">
-			<ul>
-				<li><a href="./index.html">Home</a></li>
-				<li><a href="./chart.html">Chart</a></li>
-				<li><a href="./about.html">About</a></li>
-				<li id="login-btn"><a href="./login.html">Login</a></li>
-			</ul>
-		</div>
-	</nav>
+        <div class="brand-title">L-MIT InvenTeam</div>
+        <a href="#" class="toggle-button"> <span class="bar"></span> <span class="bar"></span> <span class="bar"></span>
+        </a>
+        <div class="navbar-links">
+            <ul>
+                <li><a href="./index.html">Home</a></li>
+                <li><a href="./chart.html">Chart</a></li>
+                <li><a href="./about.html">About</a></li>
+                <li id="login-btn"><a href="./login.html">Login</a></li>
+            </ul>
+        </div>
+    </nav>
 
-    <p>Page about chart</p>
+    <section>
 
-    <input type="file" name="datainputbtn" id="datainputbtn">
-    <button id="submitbtn" onclick="uploadData()">Submit To API</button>
-    <button id="submitbtn-2" onclick="readFromUpload()">Graph Uploaded Data</button><br>
+        <input type="file" name="datainputbtn" id="datainputbtn">
+        <div class="column-btn">
+            <button class="cool-btn" id="submitbtn" onclick="uploadData()">Submit To API</button>
+            <button class="cool-btn" id="submitbtn-2" onclick="readFromUpload()">Graph Uploaded Data</button>
+        </div>
 
-    <input type="radio" id="temp" name="datatype" value="temp">
-    <label for="temp">Temperature</label><br>
-    <input type="radio" id="ph" name="datatype" value="ph" checked>
-    <label for="ph">pH</label><br>
-    <input type="radio" id="salinity" name="datatype" value="salinity">
-    <label for="salinity">Salinity</label><br>
+    </section>
 
-    <label for="start">StartTime:</label>
-    <input type="datetime-local" id="startdate" name="timerange" required>
-    <label for="end">EndTime:</label>
-    <input type="datetime-local" id="enddate" name="timerange" required><br>
-    <span id="date-range"></span>
-    <button id="accessbtn" onclick="getchoice()">Get Data from Api</button><br>
+    <section>
+        <div class="wrapper">
+            <label class="container">Temperature
+                <input type="radio" id="temp" name="datatype" value="temp">
+                <span class="checkmark"></span>
+            </label>
+            <label class="container">pH
+                <input type="radio" id="ph" name="datatype" value="ph" checked>
+                <span class="checkmark"></span>
+            </label>
+            <label class="container">Salinity
+                <input type="radio" id="salinity" name="datatype" value="salinity">
+                <span class="checkmark"></span>
+            </label>
+        </div>
 
-    <canvas id="chart" width="400" height="400"></canvas>
+        <div class="wrapper">
+            <label for="start">StartTime:</label>
+            <input type="datetime-local" id="startdate" name="timerange" required>
+            <label for="end">EndTime:</label>
+            <input type="datetime-local" id="enddate" name="timerange" required><br>
+            <span id="date-range"></span>
+        </div>
+
+        <button class="cool-btn api-btn" id="accessbtn" onclick="getchoice()">Get Data from Api</button><br>
+    </section>
+
+
+    <div class="chart-container" style="position: relative; height:95vh; width:95vw;margin:10px auto">
+        <canvas id="chart" width="400" height="400"></canvas>
+    </div>
+
 
 
 </body>
