@@ -144,40 +144,44 @@ void loop()
   Serial.println(t.sec);
 
   delay(1000);
+  {
+    String data = String (Fahrenheit) + (Celcius) + (phValue) + (t.year) + (t.mon) + (t.mday) + (t.hour) + (t.sec);
+    if (millis() > lastTransmission + interval) {
+      Serial.println("AT+SEND=2,35," + String(data));
+
+      lastTransmission = millis();
 
 
-  File dataFile = SD.open("datalog.txt", FILE_WRITE);
-  // if the file is available, write to it:
-  if (dataFile) {
-    dataFile.print("Fahrenheit = ");
-    dataFile.println(Fahrenheit);
-    dataFile.print("Celcius = ");
-    dataFile.println(Celcius);
-    dataFile.print("pH = ");
-    dataFile.println(phValue);
-    dataFile.print("Date : ");
-    dataFile.print(t.mday);
-    dataFile.print("/");
-    dataFile.print(t.mon);
-    dataFile.print("/");
-    dataFile.print(t.year);
-    dataFile.print("\t Hour : ");
-    dataFile.print(t.hour);
-    dataFile.print(":");
-    dataFile.print(t.min);
-    dataFile.print(".");
-    dataFile.println(t.sec);
-    dataFile.close();
+
+
+      File dataFile = SD.open("datalog.txt", FILE_WRITE);
+      // if the file is available, write to it:
+      if (dataFile) {
+        dataFile.print("Fahrenheit = ");
+        dataFile.println(Fahrenheit);
+        dataFile.print("Celcius = ");
+        dataFile.println(Celcius);
+        dataFile.print("pH = ");
+        dataFile.println(phValue);
+        dataFile.print("Date : ");
+        dataFile.print(t.mday);
+        dataFile.print("/");
+        dataFile.print(t.mon);
+        dataFile.print("/");
+        dataFile.print(t.year);
+        dataFile.print("\t Hour : ");
+        dataFile.print(t.hour);
+        dataFile.print(":");
+        dataFile.print(t.min);
+        dataFile.print(".");
+        dataFile.println(t.sec);
+        dataFile.close();
+      }
+      // if the file isn't open, pop up an error:
+      else {
+        Serial.println("error opening datalog.txt");
+      }
+    }
   }
-  // if the file isn't open, pop up an error:
-  else {
-    Serial.println("error opening datalog.txt");
-  }
-
-
-  String data = String (Fahrenheit) + (phValue) + (t.year) + (t.mon) + (t.mday) + (t.hour) + (t.sec);
-
-  Serial.println("AT+SEND=2,20," + String(data));
-  lastTransmission = millis();
-
 }
+
