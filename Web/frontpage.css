@@ -1,0 +1,143 @@
+section {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-height: 200px;
+  margin: 100px 20vw;
+  padding: 50px;
+  z-index: 10;
+  /*background-color: rgba(100, 100, 250, 0.6);*/
+  border-radius: 25px;
+  color: #fff;
+
+}
+
+section:nth-of-type(2n){
+  flex-direction: row-reverse;
+}
+section:nth-of-type(2n) h1{
+  border-left: 2px solid rgb(200, 200, 200);
+}
+section:nth-of-type(2n+1) h1{
+  border-right: 2px solid rgb(200, 200, 200);
+}
+section h1{
+  padding: 10px 20px;
+}
+section p{
+  padding: 10px 20px;
+}
+
+@media (max-width: 800px){
+  section{
+    margin: 50px 0;
+    background-color: rgba(100, 100, 250, 0.6);
+  }
+  svg{
+    display: none;
+  }
+}
+@media (max-width: 1200px){
+  section{
+    margin: 100px 15vw;
+
+  }
+  
+}
+@media (max-width: 1100px){
+  section{
+    margin: 100px 10vw;
+
+  }
+  
+}
+@media (max-width: 500px){
+  section{
+    flex-direction: column !important;
+    
+  }
+  section h1{
+    border: none !important;
+  }
+}
+a{
+  text-decoration: none;
+  color: #fff;
+}
+
+@supports (
+  (-webkit-backdrop-filter: blur(2em)) or (backdrop-filter: blur(2em))
+) {
+  section {
+    -webkit-backdrop-filter: blur(2em);
+    backdrop-filter: saturate(180%) blur(10px);
+  }
+}
+
+
+
+.wave {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  transform: rotate(180deg);
+}
+
+.wave svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 1.3px);
+  height: 140px;
+}
+
+.wave .shape-fill {
+  fill: #0c3bd8;
+}
+
+.layer1 {
+  background-image: url("../img/clouds.png");
+  margin: 0;
+  padding: 100px 20vw;
+}
+.intro {
+  background-color: rgba(25, 138, 167, 0.6);
+  padding: 10px 50px;
+  border-radius: 40px;
+}
+.intro h1{
+  border: none !important;
+}
+
+canvas{
+  z-index: 1;
+  position: fixed;
+  top: 0;
+  left: 0;
+  /*display: none;*/
+}
+.button {
+  background-color: #4CAF50; /* Green */
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  border-radius: 50%;
+}
+
+.button:hover {
+  box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+}
+
+#blob-content{
+  position: absolute;
+  z-index: 9;
+  transform: translateY(-100%) translateX(-48%) scaleY(0.5);
+  left: 48%;
+}
