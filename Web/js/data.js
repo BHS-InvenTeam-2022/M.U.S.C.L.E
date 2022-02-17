@@ -150,7 +150,7 @@ function getchoice() {
             data_y = data_y.slice(starti, endi);
             console.log(clock_x);
             console.log(data_y);
-            chartIt(clock_x, data_y);
+            chartIt(clock_x, data_y, datatype);
 
         } else {
             alert("no data was recieved");
