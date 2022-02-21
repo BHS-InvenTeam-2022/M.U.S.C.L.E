@@ -16,8 +16,6 @@ type Egg struct {
 	Ph_data       float64 `json:"PhData"`
 	Clock_data    string  `json:"ClockData"`
 	Salinity_data float64 `json:"SalinityData"`
-	Data_packet   string  `json:"DataPacket"`
-	Clock_packet  string  `json:"ClockPacket"`
 }
 
 type dataChan chan string
