@@ -57,6 +57,7 @@ const temp_data = [
 
 function getchoice() {
 
+    //sample example data
     //chartIt(temp_clock, temp_data, "ph");
     //return; //just for testing purposes
 
