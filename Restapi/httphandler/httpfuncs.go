@@ -70,12 +70,12 @@ func userInfo(w http.ResponseWriter, r *http.Request) {
 
 	if len(urlParams["username"]) == 0 {
 		w.WriteHeader(400)
-		errormsg := HttpMessage{Code: 400, Msg: "username must be provided"}
+		errormsg := HttpMessage{Msg: "username must be provided"}
 		json.NewEncoder(w).Encode(errormsg)
 		return
 	} else if len(urlParams["password"]) == 0 {
 		w.WriteHeader(400)
-		errormsg := HttpMessage{Code: 400, Msg: "password must be provided"}
+		errormsg := HttpMessage{Msg: "password must be provided"}
 		json.NewEncoder(w).Encode(errormsg)
 		return
 	}
@@ -84,13 +84,13 @@ func userInfo(w http.ResponseWriter, r *http.Request) {
 	person := dbinterface.SearchForPerson(db, username)
 	if person.Id == 0 {
 		w.WriteHeader(404)
-		errormsg := HttpMessage{Code: 404, Msg: "user doesn't exist"}
+		errormsg := HttpMessage{Msg: "user doesn't exist"}
 		json.NewEncoder(w).Encode(errormsg)
 		return
 	}
 	if !CheckPasswordHash(urlParams["password"][0], person.Password) {
 		w.WriteHeader(403)
-		errormsg := HttpMessage{Code: 403, Msg: "password is incorrect"}
+		errormsg := HttpMessage{Msg: "password is incorrect"}
 		json.NewEncoder(w).Encode(errormsg)
 		return
 	}
@@ -98,6 +98,11 @@ func userInfo(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 	json.NewEncoder(w).Encode(person)
 }
+
+/*
+user post endpoint takes in person sturct passed in body of post request adn creates user
+returns custom httpmessage if fails
+*/
 func userCreate(w http.ResponseWriter, r *http.Request) {
 	reqBody, _ := ioutil.ReadAll(r.Body)
 
@@ -176,19 +181,19 @@ func eggInfo(w http.ResponseWriter, r *http.Request) {
 
 func HandleRequests() {
 
+	//opens user database
 	var err error
 	db, err = sql.Open("sqlite3", "./database.db")
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer db.Close()
 
+	//opens egg data database
 	db2, err = sql.Open("sqlite3", "./database2.db")
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer db2.Close()
 
 	myRouter := mux.NewRouter().StrictSlash(true)
@@ -197,7 +202,6 @@ func HandleRequests() {
 	originsOk := handlers.AllowedOrigins([]string{"*"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 
-	myRouter.HandleFunc("/", homePage)
 	myRouter.HandleFunc("/user", userCreate).Methods("POST")
 	myRouter.HandleFunc("/user", userInfo)
 

@@ -5,7 +5,7 @@ body {
 section {
     margin: 20px 20px;
     background: rgb(0, 158, 132);
-    display: flex;
+    display: flex;    
     justify-content: center;
     border-radius: 10px;
 }

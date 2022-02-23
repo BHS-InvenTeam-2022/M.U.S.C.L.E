@@ -18,6 +18,9 @@ type Person struct {
 	Eggnames string `json:"Eggnames"`
 }
 
+/*
+checks if a person struct is completely filled and returns true with empty string if its completely filled
+*/
 func (P *Person) CheckValid() (bool, string) {
 	if P.Username == "" {
 		return false, "username missing"
@@ -33,6 +36,9 @@ func (P *Person) CheckValid() (bool, string) {
 	return true, ""
 }
 
+/*
+example function for testing purposes
+*/
 func ReadTable() {
 	db, err := sql.Open("sqlite3", "./database2.db")
 	if err != nil {
@@ -93,6 +99,9 @@ func ReadTable() {
 
 }
 
+/*
+Adds a record to the database taking in a person struct and returning a bool if created or not
+*/
 func AddPerson(db *sql.DB, newPerson Person) bool {
 
 	stmt, _ := db.Prepare("INSERT INTO user_model (Username, Password, Email, Eggid, Eggnames) VALUES (?, ?, ?, ?, ?)")
@@ -108,6 +117,9 @@ func AddPerson(db *sql.DB, newPerson Person) bool {
 	return true
 }
 
+/*
+searches for person in database given username string and returns a struct of the person
+*/
 func SearchForPerson(db *sql.DB, searchString string) Person {
 
 	rows, err := db.Query("SELECT Id, Username, Password, Email, Eggid, Eggnames FROM user_model WHERE Username = '" + searchString + "' LIMIT 1")
@@ -140,6 +152,9 @@ func SearchForPerson(db *sql.DB, searchString string) Person {
 	return people[0]
 }
 
+/*
+updates record of person in User databse given another person struct and matches based on username string
+*/
 func UpdatePerson(db *sql.DB, ourPerson Person) int64 {
 
 	stmt, err := db.Prepare("UPDATE user_model set Password = ?, Email = ?, Eggid = ?, Eggnames = ? where Username = ?")
@@ -161,6 +176,11 @@ func UpdatePerson(db *sql.DB, ourPerson Person) int64 {
 	return affected
 }
 
+/*
+Deletes record of person from User database
+inputs: databse reference and username in string
+returns rows affected
+*/
 func DeletePerson(db *sql.DB, usernameToDelete string) int64 {
 
 	stmt, err := db.Prepare("DELETE FROM user_model where Username = ?")

@@ -16,9 +16,8 @@ type Egg struct {
 	Ph_data       float64 `json:"PhData"`
 	Clock_data    string  `json:"ClockData"`
 	Salinity_data float64 `json:"SalinityData"`
-	Data_packet   string  `json:"DataPacket"`
-	Clock_packet  string  `json:"ClockPacket"`
 }
+
 type dataChan chan string
 
 func (f dataChan) Next() *string {
@@ -28,6 +27,11 @@ func (f dataChan) Next() *string {
 	}
 	return &c
 }
+
+/*
+Generator function similiar to python yield functions using channels to add pieces of data to not load full string into memory
+returns the data channel where data can then be called from using the Next() function
+*/
 func splitstring(data string) dataChan {
 	/*f := splitstring(`75.4;4.3;0.3;2022-01-16 13:40:00
 	78.5;7.4;1.0;2022-01-16 13:50:00
@@ -57,6 +61,9 @@ func splitstring(data string) dataChan {
 	return c
 }
 
+/*
+checks if a slice of string is acceptable to input into the database and returns bool
+*/
 func checkIfValidEntry(entry []string) bool {
 	if len(entry) != 4 {
 		return false
@@ -69,18 +76,28 @@ func checkIfValidEntry(entry []string) bool {
 	return true
 }
 
+/*
+Adds records to database provided with the eggid provided and the data in a string in csv format with columns aligning to database columns
+*/
 func AddRecords(db *sql.DB, datastr string, eggid string) {
 
 	var str strings.Builder
 	str.WriteString("INSERT INTO egg_model (eggId, temp_data, ph_data, clock_data, salinity_data) VALUES ")
 	lines := splitstring(datastr)
 
+	linesadded := 0
 	for r := range lines {
 		split := strings.Split(r, ";")
 		if checkIfValidEntry(split) {
 			str.WriteString(fmt.Sprintf("('%s', '%s', '%s', '%s', '%s'),", eggid, split[0], split[1], split[3], split[2]))
+			linesadded++
 		}
 	}
+
+	if linesadded == 0 {
+		log.Fatal("no entries added to database")
+	}
+
 	mystr := str.String()
 	mystr = mystr[:len(mystr)-1]
 

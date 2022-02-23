@@ -57,6 +57,7 @@ const temp_data = [
 
 function getchoice() {
 
+    //sample example data
     //chartIt(temp_clock, temp_data, "ph");
     //return; //just for testing purposes
 
@@ -150,7 +151,7 @@ function getchoice() {
             data_y = data_y.slice(starti, endi);
             console.log(clock_x);
             console.log(data_y);
-            chartIt(clock_x, data_y);
+            chartIt(clock_x, data_y, datatype);
 
         } else {
             alert("no data was recieved");

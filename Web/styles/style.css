@@ -65,8 +65,8 @@ body{
 }
 
 footer{
-    background: #0C3BD8;
-    z-index: 15;
+    background: rgb(123, 125, 131);
+    z-index: 5;
     position: relative;
     min-height: 100px;
     overflow: hidden;
@@ -76,7 +76,7 @@ footer{
 }
 footer img{
     max-width: 50px;
-    height: auto;
+    height: 50px;    
     margin: 10px 10px;
 }
 
