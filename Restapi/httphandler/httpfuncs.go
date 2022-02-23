@@ -3,19 +3,23 @@ package httphandler
 import (
 	"bytes"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/kd993595/restapi/dbinterface"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var db *sql.DB
 var db2 *sql.DB
+var pepper = "myownpepper"
 
 type HttpMessage struct {
 	Code int    `json:"code"`
@@ -27,6 +31,32 @@ type HttpMessage struct {
 func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to the HomePage!")
 	fmt.Println("Endpoint Hit: homePage")
+}
+
+//hashes password and returns base64 encoding
+func HashPassword(password string, salt string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(pepper+salt+password), 14)
+	if err != nil {
+		log.Fatal(err)
+	}
+	encodedText := base64.StdEncoding.EncodeToString([]byte(bytes))
+	dbpass := fmt.Sprintf("%s$%s$%s", "bcrypt", salt, encodedText)
+	return dbpass, err
+}
+
+//checks if hash and password are the same returns true if they are
+func CheckPasswordHash(password, hash string) bool {
+	parts := strings.Split(hash, "$")
+	functionname := parts[0]
+	_ = functionname
+	salt := parts[1]
+	hashpassword := parts[2]
+	rawDecodedText, err := base64.StdEncoding.DecodeString(hashpassword)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(rawDecodedText), []byte(pepper+salt+password))
+	return err == nil
 }
 
 func userInfo(w http.ResponseWriter, r *http.Request) {
@@ -58,7 +88,7 @@ func userInfo(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(errormsg)
 		return
 	}
-	if urlParams["password"][0] != person.Password {
+	if !CheckPasswordHash(urlParams["password"][0], person.Password) {
 		w.WriteHeader(403)
 		errormsg := HttpMessage{Code: 403, Msg: "password is incorrect"}
 		json.NewEncoder(w).Encode(errormsg)
@@ -69,7 +99,6 @@ func userInfo(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(person)
 }
 func userCreate(w http.ResponseWriter, r *http.Request) {
-	//TODO: write hash function for password
 	reqBody, _ := ioutil.ReadAll(r.Body)
 
 	var newUser dbinterface.Person
@@ -79,6 +108,7 @@ func userCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	valid, msg := newUser.CheckValid()
 	if !valid {
+		w.WriteHeader(406)
 		errormsg := HttpMessage{Code: 406, Msg: msg}
 		json.NewEncoder(w).Encode(errormsg)
 		return
@@ -86,13 +116,17 @@ func userCreate(w http.ResponseWriter, r *http.Request) {
 
 	person := dbinterface.SearchForPerson(db, newUser.Username)
 	if person.Id != 0 {
+		w.WriteHeader(409)
 		errormsg := HttpMessage{Code: 409, Msg: "user could not be created username already taken"}
 		json.NewEncoder(w).Encode(errormsg)
 		return
 	}
 
+	newUser.Password, _ = HashPassword(newUser.Password, newUser.Username)
+
 	valid = dbinterface.AddPerson(db, newUser)
 	if !valid {
+		w.WriteHeader(409)
 		errormsg := HttpMessage{Code: 409, Msg: "user could not be created"}
 		json.NewEncoder(w).Encode(errormsg)
 		return
@@ -116,6 +150,7 @@ func eggCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dbinterface.AddRecords(db2, eggrequest.Data, eggrequest.EggId)
+	w.WriteHeader(201)
 	endmsg := HttpMessage{Code: 201, Msg: "records successfully added"}
 	json.NewEncoder(w).Encode(endmsg)
 
