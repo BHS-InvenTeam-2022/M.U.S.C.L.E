@@ -145,13 +145,11 @@ void loop()
 
   delay(1000);
   
-  String data = String (Fahrenheit) + (Celcius) + (phValue) + (t.year) + (t.mon) + (t.mday) + (t.hour) + (t.sec);
+  String data = String(Fahrenheit) +";"+ String(phValue) +";"+ String(t.year) + String(t.mon) + String(t.mday) + String(t.hour) + String(t.sec) + String(t.sec);
   if (millis() > lastTransmission + interval) {
-    Serial.println("AT+SEND=2,35," + String(data));
+    Serial.println("AT+SEND=2,35," + data);
 
     lastTransmission = millis();
-
-
 
 
     File dataFile = SD.open("datalog.txt", FILE_WRITE);
@@ -159,8 +157,6 @@ void loop()
     if (dataFile) {
       dataFile.print("Fahrenheit = ");
       dataFile.println(Fahrenheit);
-      dataFile.print("Celcius = ");
-      dataFile.println(Celcius);
       dataFile.print("pH = ");
       dataFile.println(phValue);
       dataFile.print("Date : ");
