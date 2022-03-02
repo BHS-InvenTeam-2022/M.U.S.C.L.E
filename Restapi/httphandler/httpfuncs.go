@@ -22,8 +22,7 @@ var db2 *sql.DB
 var pepper = "myownpepper"
 
 type HttpMessage struct {
-	Code int    `json:"code"`
-	Msg  string `json:"message"`
+	Msg string `json:"message"`
 }
 
 //w.WriteHeader(int)  used to write the status code have to add to all endpoints
@@ -80,6 +79,7 @@ func userInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	username := urlParams["username"][0]
+	username = strings.ToLower(username)
 
 	person := dbinterface.SearchForPerson(db, username)
 	if person.Id == 0 {
@@ -114,15 +114,17 @@ func userCreate(w http.ResponseWriter, r *http.Request) {
 	valid, msg := newUser.CheckValid()
 	if !valid {
 		w.WriteHeader(406)
-		errormsg := HttpMessage{Code: 406, Msg: msg}
+		errormsg := HttpMessage{Msg: msg}
 		json.NewEncoder(w).Encode(errormsg)
 		return
 	}
 
+	newUser.Username = strings.ToLower(newUser.Username)
+
 	person := dbinterface.SearchForPerson(db, newUser.Username)
 	if person.Id != 0 {
 		w.WriteHeader(409)
-		errormsg := HttpMessage{Code: 409, Msg: "user could not be created username already taken"}
+		errormsg := HttpMessage{Msg: "user could not be created username already taken"}
 		json.NewEncoder(w).Encode(errormsg)
 		return
 	}
@@ -132,7 +134,7 @@ func userCreate(w http.ResponseWriter, r *http.Request) {
 	valid = dbinterface.AddPerson(db, newUser)
 	if !valid {
 		w.WriteHeader(409)
-		errormsg := HttpMessage{Code: 409, Msg: "user could not be created"}
+		errormsg := HttpMessage{Msg: "user could not be created"}
 		json.NewEncoder(w).Encode(errormsg)
 		return
 	}
@@ -156,14 +158,15 @@ func eggCreate(w http.ResponseWriter, r *http.Request) {
 
 	dbinterface.AddRecords(db2, eggrequest.Data, eggrequest.EggId)
 	w.WriteHeader(201)
-	endmsg := HttpMessage{Code: 201, Msg: "records successfully added"}
+	endmsg := HttpMessage{Msg: "records successfully added"}
 	json.NewEncoder(w).Encode(endmsg)
 
 }
 func eggInfo(w http.ResponseWriter, r *http.Request) {
 	urlParams := r.URL.Query()
 	if len(urlParams["eggId"]) == 0 || len(urlParams["datatype"]) == 0 {
-		errormsg := HttpMessage{Code: 400, Msg: "eggId and datatpe must be provided"}
+		w.WriteHeader(400)
+		errormsg := HttpMessage{Msg: "eggId and datatpe must be provided"}
 		json.NewEncoder(w).Encode(errormsg)
 		return
 	}
