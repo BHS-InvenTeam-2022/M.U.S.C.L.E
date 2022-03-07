@@ -25,8 +25,6 @@ type HttpMessage struct {
 	Msg string `json:"message"`
 }
 
-//w.WriteHeader(int)  used to write the status code have to add to all endpoints
-
 func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome to the HomePage!")
 	fmt.Println("Endpoint Hit: homePage")
@@ -100,7 +98,7 @@ func userInfo(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
-user post endpoint takes in person sturct passed in body of post request adn creates user
+user post endpoint takes in person sturct passed in body of post request and creates user
 returns custom httpmessage if fails
 */
 func userCreate(w http.ResponseWriter, r *http.Request) {
