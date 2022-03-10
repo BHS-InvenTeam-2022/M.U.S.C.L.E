@@ -201,4 +201,6 @@ func DeletePerson(db *sql.DB, usernameToDelete string) int64 {
 
 	return affected
 }
+
 // Javed daddy was here
+// 🤬😡
