@@ -18,6 +18,20 @@ type Egg struct {
 	Salinity_data float64 `json:"SalinityData"`
 }
 
+func PrepareEggDB(db *sql.DB) {
+	stmt, _ := db.Prepare(`CREATE TABLE IF NOT EXISTS egg_model (
+		id INTEGER NOT NULL, 
+		"eggId" VARCHAR(75) NOT NULL, 
+		temp_data FLOAT NOT NULL, 
+		ph_data FLOAT NOT NULL, 
+		clock_data VARCHAR(25) NOT NULL, 
+		salinity_data FLOAT NOT NULL, 
+		PRIMARY KEY (id)
+	)`)
+	defer stmt.Close()
+	stmt.Exec()
+}
+
 type dataChan chan string
 
 func (f dataChan) Next() *string {
@@ -65,7 +79,7 @@ func splitstring(data string) dataChan {
 checks if a slice of string is acceptable to input into the database and returns bool
 */
 func checkIfValidEntry(entry []string) bool {
-	if len(entry) != 4 {
+	if len(entry) != 5 {
 		return false
 	}
 	for _, v := range entry {
@@ -80,7 +94,6 @@ func checkIfValidEntry(entry []string) bool {
 Adds records to database provided with the eggid provided and the data in a string in csv format with columns aligning to database columns
 */
 func AddRecords(db *sql.DB, datastr string, eggid string) {
-
 	var str strings.Builder
 	str.WriteString("INSERT INTO egg_model (eggId, temp_data, ph_data, clock_data, salinity_data) VALUES ")
 	lines := splitstring(datastr)

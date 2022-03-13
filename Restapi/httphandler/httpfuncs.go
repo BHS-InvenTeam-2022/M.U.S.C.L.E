@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/gorilla/handlers"
@@ -56,6 +57,11 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
+/*
+endpoint for when user is trying to log in
+takes in username and password as part fo request url
+returns the data of the user if authorized
+*/
 func userInfo(w http.ResponseWriter, r *http.Request) {
 
 	/*vars := mux.Vars(r) //use this for paramters stored in url like /{id}
@@ -111,6 +117,7 @@ func userCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	valid, msg := newUser.CheckValid()
 	if !valid {
+		fmt.Println(msg)
 		w.WriteHeader(406)
 		errormsg := HttpMessage{Msg: msg}
 		json.NewEncoder(w).Encode(errormsg)
@@ -143,8 +150,8 @@ func userCreate(w http.ResponseWriter, r *http.Request) {
 func eggCreate(w http.ResponseWriter, r *http.Request) {
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	eggrequest := struct {
-		EggId string `json:"eggId"`
-		Data  string `json:"data"`
+		Username string `json:"username"`
+		Data     string `json:"data"`
 	}{}
 
 	reqBody = bytes.ReplaceAll(reqBody, []byte("\r"), []byte(""))
@@ -154,22 +161,94 @@ func eggCreate(w http.ResponseWriter, r *http.Request) {
 		log.Fatalf("error in unmarshalling: %v", err)
 	}
 
-	dbinterface.AddRecords(db2, eggrequest.Data, eggrequest.EggId)
-	w.WriteHeader(201)
-	endmsg := HttpMessage{Msg: "records successfully added"}
-	json.NewEncoder(w).Encode(endmsg)
+	serialnum := ""
+	for i, c := range eggrequest.Data {
+		if string(c) == "\n" {
+			backnum := 0
+			for n := i; n >= 0; n-- {
+				if string(eggrequest.Data[n]) == ";" {
+					break
+				}
+				backnum++
+			}
+			backnum-- //just to make sure last character not included of the ";"
+			serialnum = string(eggrequest.Data[i-backnum : i])
+			break
+		}
+	}
 
-}
-func eggInfo(w http.ResponseWriter, r *http.Request) {
-	urlParams := r.URL.Query()
-	if len(urlParams["eggId"]) == 0 || len(urlParams["datatype"]) == 0 {
-		w.WriteHeader(400)
-		errormsg := HttpMessage{Msg: "eggId and datatpe must be provided"}
+	//checks to see if serial number in first line of ifle is valid
+	match, _ := regexp.MatchString("^[A-Za-z]{2}[0-9]{1,}$", serialnum) //magic stuff
+	if !match {
+		w.WriteHeader(403)
+		errormsg := HttpMessage{Msg: "not a valid serial number found"}
 		json.NewEncoder(w).Encode(errormsg)
 		return
 	}
 
-	data, clock_data := dbinterface.ReadRecords(db2, urlParams["datatype"][0], urlParams["eggId"][0])
+	//checks to see if username is valid
+	person := dbinterface.SearchForPerson(db, eggrequest.Username)
+	if person.Id == 0 {
+		w.WriteHeader(404)
+		errormsg := HttpMessage{Msg: "username doesn't exist"}
+		json.NewEncoder(w).Encode(errormsg)
+		return
+	}
+
+	if person.Eggid == "" {
+		person.Eggid = fmt.Sprintf("{\"%s\":\"%s\"}", serialnum, serialnum)
+	} else {
+		jsonStr := person.Eggid
+		x := map[string]string{}
+		json.Unmarshal([]byte(jsonStr), &x)
+
+		exist := false
+		for _, element := range x {
+			if element == serialnum {
+				exist = true
+				break
+			}
+		}
+		if !exist {
+			x[serialnum] = serialnum
+		}
+
+		jsonStr2, err := json.Marshal(x)
+		if err != nil {
+			log.Fatalf("Error: %s", err.Error())
+		}
+		person.Eggid = string(jsonStr2)
+	}
+	dbinterface.UpdatePerson(db, person)
+
+	dbinterface.AddRecords(db2, eggrequest.Data, serialnum)
+	w.WriteHeader(201)
+	endmsg := HttpMessage{Msg: "records successfully added"}
+	json.NewEncoder(w).Encode(endmsg)
+}
+
+func eggInfo(w http.ResponseWriter, r *http.Request) {
+	urlParams := r.URL.Query()
+	if len(urlParams["eggId"]) == 0 || len(urlParams["datatype"]) == 0 || len(urlParams["username"]) == 0 {
+		w.WriteHeader(400)
+		errormsg := HttpMessage{Msg: "eggId, datatype, and username must be provided"}
+		json.NewEncoder(w).Encode(errormsg)
+		return
+	}
+
+	person := dbinterface.SearchForPerson(db, urlParams["username"][0])
+	if person.Id == 0 {
+		w.WriteHeader(404)
+		errormsg := HttpMessage{Msg: "username doesn't exist"}
+		json.NewEncoder(w).Encode(errormsg)
+		return
+	}
+	jsonStr := person.Eggid
+	x := map[string]string{}
+	json.Unmarshal([]byte(jsonStr), &x)
+	eggid := x[urlParams["eggId"][0]]
+
+	data, clock_data := dbinterface.ReadRecords(db2, urlParams["datatype"][0], eggid)
 	datapacket := struct {
 		D string `json:"data"`
 		C string `json:"clock_data"`
@@ -189,6 +268,7 @@ func HandleRequests() {
 		log.Fatal(err)
 	}
 	defer db.Close()
+	dbinterface.PrepareUserDB(db)
 
 	//opens egg data database
 	db2, err = sql.Open("sqlite3", "./database2.db")
@@ -196,6 +276,7 @@ func HandleRequests() {
 		log.Fatal(err)
 	}
 	defer db2.Close()
+	dbinterface.PrepareEggDB(db2)
 
 	myRouter := mux.NewRouter().StrictSlash(true)
 
@@ -203,6 +284,7 @@ func HandleRequests() {
 	originsOk := handlers.AllowedOrigins([]string{"*"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 
+	myRouter.HandleFunc("/home", homePage)
 	myRouter.HandleFunc("/user", userCreate).Methods("POST")
 	myRouter.HandleFunc("/user", userInfo)
 

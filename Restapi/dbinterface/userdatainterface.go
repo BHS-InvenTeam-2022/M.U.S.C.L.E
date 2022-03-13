@@ -15,7 +15,20 @@ type Person struct {
 	Password string `json:"Password"`
 	Email    string `json:"Email"`
 	Eggid    string `json:"EggId"`
-	Eggnames string `json:"Eggnames"`
+}
+
+func PrepareUserDB(db *sql.DB) {
+	stmt, _ := db.Prepare(`CREATE TABLE IF NOT EXISTS user_model (
+		id INTEGER NOT NULL,
+		username VARCHAR(50) NOT NULL,
+		password VARCHAR(50) NOT NULL,
+		email VARCHAR(50) NOT NULL,
+		"eggId" VARCHAR(50) NOT NULL,
+		PRIMARY KEY (id),
+		UNIQUE (username)
+	)`)
+	defer stmt.Close()
+	stmt.Exec()
 }
 
 /*
@@ -28,10 +41,6 @@ func (P *Person) CheckValid() (bool, string) {
 		return false, "password missing"
 	} else if P.Email == "" {
 		return false, "email missing"
-	} else if P.Eggid == "" {
-		return false, "eggid missing"
-	} else if P.Eggnames == "" {
-		return false, "eggnames missing"
 	}
 	return true, ""
 }
@@ -104,8 +113,8 @@ Adds a record to the database taking in a person struct and returning a bool if 
 */
 func AddPerson(db *sql.DB, newPerson Person) bool {
 
-	stmt, _ := db.Prepare("INSERT INTO user_model (Username, Password, Email, Eggid, Eggnames) VALUES (?, ?, ?, ?, ?)")
-	_, err := stmt.Exec(newPerson.Username, newPerson.Password, newPerson.Email, newPerson.Eggid, newPerson.Eggnames)
+	stmt, _ := db.Prepare("INSERT INTO user_model (Username, Password, Email, Eggid) VALUES (?, ?, ?, ?)")
+	_, err := stmt.Exec(newPerson.Username, newPerson.Password, newPerson.Email, newPerson.Eggid)
 	defer stmt.Close()
 
 	if err != nil {
@@ -122,7 +131,7 @@ searches for person in database given username string and returns a struct of th
 */
 func SearchForPerson(db *sql.DB, searchString string) Person {
 
-	rows, err := db.Query("SELECT Id, Username, Password, Email, Eggid, Eggnames FROM user_model WHERE Username = '" + searchString + "' LIMIT 1")
+	rows, err := db.Query("SELECT Id, Username, Password, Email, Eggid FROM user_model WHERE Username = '" + searchString + "' LIMIT 1")
 
 	if err != nil {
 		log.Fatal(err)
@@ -137,7 +146,7 @@ func SearchForPerson(db *sql.DB, searchString string) Person {
 
 	for rows.Next() {
 		ourPerson := Person{}
-		err = rows.Scan(&ourPerson.Id, &ourPerson.Username, &ourPerson.Password, &ourPerson.Email, &ourPerson.Eggid, &ourPerson.Eggnames)
+		err = rows.Scan(&ourPerson.Id, &ourPerson.Username, &ourPerson.Password, &ourPerson.Email, &ourPerson.Eggid)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -157,13 +166,13 @@ updates record of person in User databse given another person struct and matches
 */
 func UpdatePerson(db *sql.DB, ourPerson Person) int64 {
 
-	stmt, err := db.Prepare("UPDATE user_model set Password = ?, Email = ?, Eggid = ?, Eggnames = ? where Username = ?")
+	stmt, err := db.Prepare("UPDATE user_model set Password = ?, Email = ?, Eggid = ? WHERE Username = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer stmt.Close()
 
-	res, err := stmt.Exec(ourPerson.Password, ourPerson.Email, ourPerson.Eggid, ourPerson.Eggnames, ourPerson.Username)
+	res, err := stmt.Exec(ourPerson.Password, ourPerson.Email, ourPerson.Eggid, ourPerson.Username)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -201,6 +210,3 @@ func DeletePerson(db *sql.DB, usernameToDelete string) int64 {
 
 	return affected
 }
-
-// Javed daddy was here
-// 🤬😡
