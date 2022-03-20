@@ -1,9 +1,7 @@
 #include <EEPROM.h>
 
 int address = 0;
-byte value;
-
-char *letters = "0123456789";
+String letters = "0123456789";
 String serialnum = "";
 
 void writeStringToEEPROM(int addrOffset, const String &strToWrite)
@@ -16,8 +14,6 @@ void writeStringToEEPROM(int addrOffset, const String &strToWrite)
   }
 }
 
-
-
 String readStringFromEEPROM(int addrOffset)
 {
   int newStrLen = EEPROM.read(addrOffset);
@@ -26,38 +22,51 @@ String readStringFromEEPROM(int addrOffset)
   {
     data[i] = EEPROM.read(addrOffset + 1 + i);
   }
-  data[newStrLen] = '\ $'; // !!! NOTE !!! Remove the space between the slash "/" and "0" (I've added a space because otherwise there is a display bug)
+  data[newStrLen] = '\0';
   return String(data);
 }
 
 void randSerialNum() {
-  for (int i = 0; i < 9; i++)
+  serialnum = "ss";
+  for (int i = 0; i < 7; i++)
   {
     serialnum = serialnum + letters[random(0, 9)];
   }
 }
+
 void setSerialNum() {
   String retrievedString = readStringFromEEPROM(0);
-  if (retrievedString[retrievedString.length() - 1 == "$"]) {
-    for (byte i = 0; i < retrievedString.length()-1; i = i++)
+  Serial.println("retrieved number is: " + retrievedString);
+  Serial.println("length is: " + String(retrievedString.length()));
+
+  if (retrievedString.length() > 1) {
+    for (int i = 0; i < retrievedString.length(); i++)
     {
       serialnum  = serialnum + retrievedString[i];
-    }    
+    }
   } else {
     randSerialNum();
     writeStringToEEPROM(0, serialnum);
   }
-  Serial.println(serialnum);
+
 }
+
+void clear() {
+  for (int i = 0 ; i < EEPROM.length() ; i++) {
+    EEPROM.write(i, 0);
+  }
+}
+
 void setup() {
   Serial.begin(9600);
   while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB port only
+    delay(10);
   }
-
+  //clear();
+  randomSeed(analogRead(0));
   setSerialNum();
+  Serial.println("serial number is: " + serialnum);
 }
-
 
 void loop() {
   delay(500);
