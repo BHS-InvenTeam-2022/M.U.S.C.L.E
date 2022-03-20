@@ -30,6 +30,16 @@ func PrepareEggDB(db *sql.DB) {
 	)`)
 	defer stmt.Close()
 	stmt.Exec()
+
+	stmt, _ = db.Prepare(`CREATE TABLE IF NOT EXISTS sonde_model (
+		id INTEGER NOT NULL,
+		"eggId" VARCHAR(75) NOT NULL,
+		accel_data FLOAT NOT NULL,
+		clock_data VARCHAR(25) NOT NULL,
+		PRIMARY KEY (id)
+	)`)
+	defer stmt.Close()
+	stmt.Exec()
 }
 
 type dataChan chan string

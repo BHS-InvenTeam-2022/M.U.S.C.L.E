@@ -221,7 +221,17 @@ func eggCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	dbinterface.UpdatePerson(db, person)
 
-	dbinterface.AddEggRecords(db2, eggrequest.Data, serialnum)
+	if serialnum[0:2] == "ss" {
+		dbinterface.AddEggRecords(db2, eggrequest.Data, serialnum)
+	} else if serialnum[0:2] == "as" {
+		dbinterface.AddAccelRecords(db2, eggrequest.Data, serialnum)
+	} else {
+		w.WriteHeader(409)
+		errormsg := HttpMessage{Msg: "unknown sensor type found"}
+		json.NewEncoder(w).Encode(errormsg)
+		return
+	}
+
 	w.WriteHeader(201)
 	endmsg := HttpMessage{Msg: "records successfully added"}
 	json.NewEncoder(w).Encode(endmsg)
@@ -248,7 +258,18 @@ func eggInfo(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal([]byte(jsonStr), &x)
 	eggid := x[urlParams["eggId"][0]]
 
-	data, clock_data := dbinterface.ReadEggRecords(db2, urlParams["datatype"][0], eggid)
+	var data, clock_data string
+	if eggid[0:2] == "ss" {
+		data, clock_data = dbinterface.ReadEggRecords(db2, urlParams["datatype"][0], eggid)
+	} else if eggid[0:2] == "as" {
+		data, clock_data = dbinterface.ReadAccelRecords(db2, eggid)
+	} else {
+		w.WriteHeader(404)
+		errormsg := HttpMessage{Msg: "unknown sensor type request attempt"}
+		json.NewEncoder(w).Encode(errormsg)
+		return
+	}
+
 	datapacket := struct {
 		D string `json:"data"`
 		C string `json:"clock_data"`

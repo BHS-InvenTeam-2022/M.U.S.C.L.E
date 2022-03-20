@@ -13,18 +13,6 @@ type AccelSensor struct {
 	Angle float64 `json:"angle"`
 }
 
-func PrepareAccelDB(db *sql.DB) {
-	stmt, _ := db.Prepare(`CREATE TABLE IF NOT EXISTS egg_model (
-		id INTEGER NOT NULL,
-		"eggId" VARCHAR(75) NOT NULL,
-		accel_data FLOAT NOT NULL,
-		clock_data VARCHAR(25) NOT NULL,
-		PRIMARY KEY (id)
-	)`)
-	defer stmt.Close()
-	stmt.Exec()
-}
-
 /*
 checks if a slice of string is acceptable to input into the database and returns bool
 */
@@ -45,7 +33,7 @@ Adds records to database provided with the eggid provided and the data in a stri
 */
 func AddAccelRecords(db *sql.DB, datastr string, eggid string) {
 	var str strings.Builder
-	str.WriteString("INSERT INTO egg_model (eggId, accel_data, clock_data) VALUES ")
+	str.WriteString("INSERT INTO sonde_model (eggId, accel_data, clock_data) VALUES ")
 	lines := splitstring(datastr)
 
 	linesadded := 0
@@ -80,7 +68,7 @@ func AddAccelRecords(db *sql.DB, datastr string, eggid string) {
 }
 
 /*
-Reads from egg database and returns two strings first being the actual data and second is corresponding clock data both align to each other in one-to-one relationship
+Reads from accelerometer database and returns two strings first being the actual data and second is corresponding clock data both align to each other in one-to-one relationship
 */
 func ReadAccelRecords(db *sql.DB, eggid string) (string, string) {
 	var datastr strings.Builder
@@ -89,7 +77,7 @@ func ReadAccelRecords(db *sql.DB, eggid string) (string, string) {
 	var rows *sql.Rows
 	var err error
 
-	rows, err = db.Query("SELECT accel_data, clock_data FROM egg_model WHERE eggId = '" + eggid + "'")
+	rows, err = db.Query("SELECT accel_data, clock_data FROM sonde_model WHERE eggId = '" + eggid + "'")
 
 	if err != nil {
 		log.Fatal(err)
