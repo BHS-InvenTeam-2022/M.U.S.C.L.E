@@ -93,7 +93,7 @@ func checkIfValidEntry(entry []string) bool {
 /*
 Adds records to database provided with the eggid provided and the data in a string in csv format with columns aligning to database columns
 */
-func AddRecords(db *sql.DB, datastr string, eggid string) {
+func AddEggRecords(db *sql.DB, datastr string, eggid string) {
 	var str strings.Builder
 	str.WriteString("INSERT INTO egg_model (eggId, temp_data, ph_data, clock_data, salinity_data) VALUES ")
 	lines := splitstring(datastr)
@@ -132,7 +132,7 @@ func AddRecords(db *sql.DB, datastr string, eggid string) {
 /*
 Reads from egg database and returns two strings first being the actual data and second is corresponding clock data both align to each other in one-to-one relationship
 */
-func ReadRecords(db *sql.DB, datatype string, eggid string) (string, string) {
+func ReadEggRecords(db *sql.DB, datatype string, eggid string) (string, string) {
 	var datastr strings.Builder
 	var clockstr strings.Builder
 

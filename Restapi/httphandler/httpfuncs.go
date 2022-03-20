@@ -177,7 +177,7 @@ func eggCreate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	//checks to see if serial number in first line of ifle is valid
+	//checks to see if serial number in first line of file is valid
 	match, _ := regexp.MatchString("^[A-Za-z]{2}[0-9]{1,}$", serialnum) //magic stuff
 	if !match {
 		w.WriteHeader(403)
@@ -221,7 +221,7 @@ func eggCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	dbinterface.UpdatePerson(db, person)
 
-	dbinterface.AddRecords(db2, eggrequest.Data, serialnum)
+	dbinterface.AddEggRecords(db2, eggrequest.Data, serialnum)
 	w.WriteHeader(201)
 	endmsg := HttpMessage{Msg: "records successfully added"}
 	json.NewEncoder(w).Encode(endmsg)
@@ -248,7 +248,7 @@ func eggInfo(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal([]byte(jsonStr), &x)
 	eggid := x[urlParams["eggId"][0]]
 
-	data, clock_data := dbinterface.ReadRecords(db2, urlParams["datatype"][0], eggid)
+	data, clock_data := dbinterface.ReadEggRecords(db2, urlParams["datatype"][0], eggid)
 	datapacket := struct {
 		D string `json:"data"`
 		C string `json:"clock_data"`
@@ -270,7 +270,7 @@ func HandleRequests() {
 	defer db.Close()
 	dbinterface.PrepareUserDB(db)
 
-	//opens egg data database
+	//opens eggs data database
 	db2, err = sql.Open("sqlite3", "./database2.db")
 	if err != nil {
 		log.Fatal(err)
