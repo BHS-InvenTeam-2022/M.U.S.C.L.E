@@ -1,3 +1,7 @@
+//LoRa module
+unsigned long lastTransmission;
+const int interval = 1000;
+
 //pH
 const int analogInPin = A2;
 int sensorValue = 0;
@@ -259,6 +263,48 @@ void writeToFile() {
   }
 }
 
+int counter = 0;
+int retries = 4;//number of seconds to retry for basically timeout connection
+String mybuffer;
+bool connected = false;
+void sendpackets() {
+  File dataFile = SD.open("datalog.txt", FILE_READ);
+  int totalBytes = dataFile.size();
+  String data = "size:" + String(totalBytes);
+  if (millis() > lastTransmission + interval) {
+    Serial.println("AT+SEND=2,35," + data);
+    lastTransmission = millis();
+  }
+  connected = true;
+
+  dataFile = SD.open("datalog.txt");
+  if (!dataFile) {
+    Serial.print("The text file cannot be opened");
+    while (1);
+  }
+  while (dataFile.available() && connected) {
+    mybuffer = dataFile.readStringUntil('\n');
+    if (millis() > lastTransmission + interval) {
+      Serial.println("AT+SEND=2,35," + mybuffer+"?"+String(counter));
+      lastTransmission = millis();
+    }
+
+    int t_count = 0;
+    while(Serial.available() && t_count<retries){
+      String incomingString = Serial.readString();
+      if(incomingString.substring(13) == "OK"){//continue sending packets
+        break
+      }
+      t_count++;
+      delay(1000);
+    }
+    if(t_count >= retries){
+      connected = false;
+    }
+  }
+
+  dataFile.close();
+}
 
 void loop()
 {
@@ -272,12 +318,19 @@ void loop()
 
   //Salinity
   salinityReading();
-  Serial.println("salinity " + String(ppt));
+  Serial.println(" salinity " + String(ppt));
 
   //Clock Module
   clockReading();
   Serial.print("Date : " + String(t.mday) + "/" + String(t.mon) + "/" + String(t.year) + "\t Hour : " + ":" + String(t.hour) + ":" + String(t.min) + "." + String(t.sec));
 
   //writeToFile();
-  delay(500);
+
+  String data = String(Fahrenheit) + ";" + String(phValue) + ";" + String(t.year) + String(t.mon) + String(t.mday) + String(t.hour) + String(t.sec) + String(t.sec);
+  if (millis() > lastTransmission + interval) {
+    Serial.println("AT+SEND=2,35," + data);
+    lastTransmission = millis();
+  }
+
+  delay(1000);
 }
