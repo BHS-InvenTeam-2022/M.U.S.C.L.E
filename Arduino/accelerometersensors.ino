@@ -1,5 +1,10 @@
 #define TCAADDR 0x70
 
+//SD Card
+#include <SD.h>
+#include <SPI.h>
+const byte chipSelect = 10;
+
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
@@ -116,6 +121,8 @@ void scanPorts() {
   }
   Serial.println("\ndone");
 }
+
+
 void setup(void)
 {
   while (!Serial)
@@ -270,6 +277,37 @@ void setup(void)
     displaySensorDetails(&mpu2);*/
 
   //Serial.println("Frequency of reading: " + String(t_step));
+
+  Serial.print("Initializing SD card...");
+    pinMode(10, OUTPUT); // change this to 53 on a mega // don't follow this!!
+    digitalWrite(10, HIGH);
+    if (!SD.begin(chipSelect)) {
+    Serial.println("initialization failed!");
+    while (1);
+
+
+    Serial.println("SD Card initialization done.\n");
+    Serial.println(SD.exists("datalog.txt"));
+    if (!SD.exists("datalog.txt")) {
+    File dataFile = SD.open("datalog.txt", FILE_WRITE);
+    // if the file is available, write to it:
+    if (dataFile) {
+    dataFile.print(Fahrenheit);
+    dataFile.print(Celcius);
+    dataFile.print(phValue);
+
+
+    dataFile.close();
+    Serial.println("successfully printed");
+    }
+    // if the file isn't open, pop up an error:
+    else {
+    Serial.println("error opening datalog.txt");
+    }
+    } else {
+    Serial.println("file exists\n");
+    }
+    }
 }
 
 void loop(void)
@@ -278,14 +316,7 @@ void loop(void)
   sensors_event_t a, g, temp;
   tcaselect(0);
   mpu1.getEvent(&a, &g, &temp);
-  /*Serial.print("Rotation X: ");
-    Serial.print(g.gyro.x);
-    Serial.print(", Y: ");
-    Serial.print(g.gyro.y);
-    Serial.print(", Z: ");
-    Serial.print(g.gyro.z);
-    Serial.println(" rad/s");*/
-
+  
   if (previous1 == NULL) {
     previous1 = g.gyro.y;
   }
@@ -296,26 +327,13 @@ void loop(void)
     dtostrf(deltax1, 5, 2, t_buffer);
     char buffer[40];
     sprintf(buffer, "{\"sensor-1\": %s}", t_buffer); //fix later as string library can cause memory fragmentation
-    Serial.println(buffer);
-
-
-    //Serial.println("Delta Y1: ");
-    //Serial.println(deltax1);
-    //Serial.print("Rotation Y: ");
-    //Serial.println(g.gyro.y);
+    Serial.println(buffer);    
     previous1 = g.gyro.y;
   }
 
 
   tcaselect(1);
-  mpu2.getEvent(&a, &g, &temp);
-  /*Serial.print("Rotation X: ");
-  Serial.print(g.gyro.x);
-  Serial.print(", Y: ");
-  Serial.print(g.gyro.y);
-  Serial.print(", Z: ");
-  Serial.print(g.gyro.z);
-  Serial.println(" rad/s");*/
+  mpu2.getEvent(&a, &g, &temp); 
 
   if (previous2 == NULL) {
     previous2 = g.gyro.y;
@@ -329,14 +347,18 @@ void loop(void)
     char buffer[40];
     sprintf(buffer, "{\"sensor-2\": %s}", t_buffer); //fix later as string library can cause memory fragmentation
     Serial.println(buffer);
-    
-    //Serial.print("Delta Y2: ");
-    //Serial.println(deltax2);
-    //Serial.print("Rotation Y: ");
-    //Serial.println(g.gyro.y);
     previous2 = g.gyro.y;
   }
 
-
+  float angleopen = deltax2 - deltax1;
+  File dataFile = SD.open("datalog.txt", FILE_WRITE);
+  // if the file is available, write to it:
+  if (dataFile) {
+    dataFile.print(angleopen);
+    dataFile.close();
+  }
+  else {
+    Serial.println("error opening datalog.txt");
+  }
   delay(t_delay);
 }

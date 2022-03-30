@@ -326,10 +326,11 @@ void loop()
 
   //writeToFile();
 
-  String data = String(Fahrenheit) + ";" + String(phValue) + ";" + String(t.year) + String(t.mon) + String(t.mday) + String(t.hour) + String(t.sec) + String(t.sec);
-  if (millis() > lastTransmission + interval) {
-    Serial.println("AT+SEND=2,35," + data);
-    lastTransmission = millis();
+  if(Serial.available()){
+    String incomingString = Serial.readString();
+    if (incomingString.substring(13) == "ALL") {
+      sendpackets();
+    }
   }
 
   delay(1000);
