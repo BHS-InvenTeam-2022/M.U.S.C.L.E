@@ -3,7 +3,7 @@
 //SD Card
 #include <SD.h>
 #include <SPI.h>
-const byte chipSelect = 10;
+const byte chipSelect = 4;
 
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
@@ -17,7 +17,7 @@ float deltax2 = 0;
 float previous1 = NULL;
 float previous2 = NULL;
 float t_delay = 250;
-float t_step = t_delay / 1000;
+float t_step = t_delay / 1000; //frequency of reading
 float newval;
 
 int address = 0;
@@ -130,12 +130,10 @@ void setup(void)
 
   Wire.begin();
   Serial.begin(9600);
-  
+
   randomSeed(analogRead(0));
   setSerialNum();
   //scanPorts();
-
-  //Serial.println("MPU6050 Test"); Serial.println("");
 
   /* Initialise the 1st sensor */
   tcaselect(0);
@@ -146,62 +144,8 @@ void setup(void)
     }
   }
   mpu1.setAccelerometerRange(MPU6050_RANGE_8_G);
-  /*Serial.print("Accelerometer range set to: ");
-    switch (mpu1.getAccelerometerRange()) {
-    case MPU6050_RANGE_2_G:
-      Serial.println("+-2G");
-      break;
-    case MPU6050_RANGE_4_G:
-      Serial.println("+-4G");
-      break;
-    case MPU6050_RANGE_8_G:
-      Serial.println("+-8G");
-      break;
-    case MPU6050_RANGE_16_G:
-      Serial.println("+-16G");
-      break;
-    }*/
   mpu1.setGyroRange(MPU6050_RANGE_500_DEG);
-  /*Serial.print("Gyro range set to: ");
-    switch (mpu1.getGyroRange()) {
-    case MPU6050_RANGE_250_DEG:
-      Serial.println("+- 250 deg/s");
-      break;
-    case MPU6050_RANGE_500_DEG:
-      Serial.println("+- 500 deg/s");
-      break;
-    case MPU6050_RANGE_1000_DEG:
-      Serial.println("+- 1000 deg/s");
-      break;
-    case MPU6050_RANGE_2000_DEG:
-      Serial.println("+- 2000 deg/s");
-      break;
-    }*/
   mpu1.setFilterBandwidth(MPU6050_BAND_21_HZ);
-  /*Serial.print("Filter bandwidth set to: ");
-    switch (mpu1.getFilterBandwidth()) {
-    case MPU6050_BAND_260_HZ:
-      Serial.println("260 Hz");
-      break;
-    case MPU6050_BAND_184_HZ:
-      Serial.println("184 Hz");
-      break;
-    case MPU6050_BAND_94_HZ:
-      Serial.println("94 Hz");
-      break;
-    case MPU6050_BAND_44_HZ:
-      Serial.println("44 Hz");
-      break;
-    case MPU6050_BAND_21_HZ:
-      Serial.println("21 Hz");
-      break;
-    case MPU6050_BAND_10_HZ:
-      Serial.println("10 Hz");
-      break;
-    case MPU6050_BAND_5_HZ:
-      Serial.println("5 Hz");
-      break;
-    }*/
 
   /* Initialise the 2 sensor */
   tcaselect(1);
@@ -212,62 +156,8 @@ void setup(void)
     }
   }
   mpu2.setAccelerometerRange(MPU6050_RANGE_8_G);
-  /*Serial.print("Accelerometer range set to: ");
-    switch (mpu1.getAccelerometerRange()) {
-    case MPU6050_RANGE_2_G:
-      Serial.println("+-2G");
-      break;
-    case MPU6050_RANGE_4_G:
-      Serial.println("+-4G");
-      break;
-    case MPU6050_RANGE_8_G:
-      Serial.println("+-8G");
-      break;
-    case MPU6050_RANGE_16_G:
-      Serial.println("+-16G");
-      break;
-    }*/
   mpu2.setGyroRange(MPU6050_RANGE_500_DEG);
-  /*Serial.print("Gyro range set to: ");
-    switch (mpu1.getGyroRange()) {
-    case MPU6050_RANGE_250_DEG:
-      Serial.println("+- 250 deg/s");
-      break;
-    case MPU6050_RANGE_500_DEG:
-      Serial.println("+- 500 deg/s");
-      break;
-    case MPU6050_RANGE_1000_DEG:
-      Serial.println("+- 1000 deg/s");
-      break;
-    case MPU6050_RANGE_2000_DEG:
-      Serial.println("+- 2000 deg/s");
-      break;
-    }*/
   mpu2.setFilterBandwidth(MPU6050_BAND_21_HZ);
-  /*Serial.print("Filter bandwidth set to: ");
-    switch (mpu1.getFilterBandwidth()) {
-    case MPU6050_BAND_260_HZ:
-      Serial.println("260 Hz");
-      break;
-    case MPU6050_BAND_184_HZ:
-      Serial.println("184 Hz");
-      break;
-    case MPU6050_BAND_94_HZ:
-      Serial.println("94 Hz");
-      break;
-    case MPU6050_BAND_44_HZ:
-      Serial.println("44 Hz");
-      break;
-    case MPU6050_BAND_21_HZ:
-      Serial.println("21 Hz");
-      break;
-    case MPU6050_BAND_10_HZ:
-      Serial.println("10 Hz");
-      break;
-    case MPU6050_BAND_5_HZ:
-      Serial.println("5 Hz");
-      break;
-    }*/
 
 
   /* Display some basic information on this sensor */
@@ -276,47 +166,41 @@ void setup(void)
     tcaselect(1);
     displaySensorDetails(&mpu2);*/
 
-  //Serial.println("Frequency of reading: " + String(t_step));
 
   Serial.print("Initializing SD card...");
-    pinMode(10, OUTPUT); // change this to 53 on a mega // don't follow this!!
-    digitalWrite(10, HIGH);
-    if (!SD.begin(chipSelect)) {
+  pinMode(10, OUTPUT); // change this to 53 on a mega // don't follow this!!
+  digitalWrite(10, HIGH);
+  if (!SD.begin(chipSelect)) {
     Serial.println("initialization failed!");
     while (1);
-
-
-    Serial.println("SD Card initialization done.\n");
-    Serial.println(SD.exists("datalog.txt"));
-    if (!SD.exists("datalog.txt")) {
+  }
+  Serial.println(SD.exists("datalog.txt"));
+  if (SD.exists("datalog.txt")) {
+    Serial.println("file exists\n");
+  } else {
     File dataFile = SD.open("datalog.txt", FILE_WRITE);
     // if the file is available, write to it:
     if (dataFile) {
-    dataFile.print(Fahrenheit);
-    dataFile.print(Celcius);
-    dataFile.print(phValue);
-
-
-    dataFile.close();
-    Serial.println("successfully printed");
+      dataFile.close();
+      Serial.println("successfully printed");
     }
     // if the file isn't open, pop up an error:
     else {
-    Serial.println("error opening datalog.txt");
+      Serial.println("error opening datalog.txt");
     }
-    } else {
-    Serial.println("file exists\n");
-    }
-    }
+  }
+
+  Serial.println("SD Card initialization done.\n");
 }
 
 void loop(void)
 {
   /* Get a new sensor event */
+
   sensors_event_t a, g, temp;
+
   tcaselect(0);
   mpu1.getEvent(&a, &g, &temp);
-  
   if (previous1 == NULL) {
     previous1 = g.gyro.y;
   }
@@ -327,20 +211,17 @@ void loop(void)
     dtostrf(deltax1, 5, 2, t_buffer);
     char buffer[40];
     sprintf(buffer, "{\"sensor-1\": %s}", t_buffer); //fix later as string library can cause memory fragmentation
-    Serial.println(buffer);    
+    Serial.println(buffer);
     previous1 = g.gyro.y;
   }
 
-
   tcaselect(1);
-  mpu2.getEvent(&a, &g, &temp); 
-
+  mpu2.getEvent(&a, &g, &temp);
   if (previous2 == NULL) {
     previous2 = g.gyro.y;
   }
   else {
     newval = getintegral(previous2, g.gyro.y, t_step);
-    previous2 = g.gyro.y;
     deltax2 += newval;
     char t_buffer[10]; // Enough room for the digits you want and more to be safe
     dtostrf(deltax2, 5, 2, t_buffer);
@@ -350,15 +231,19 @@ void loop(void)
     previous2 = g.gyro.y;
   }
 
+
   float angleopen = deltax2 - deltax1;
-  File dataFile = SD.open("datalog.txt", FILE_WRITE);
+  Serial.println(angleopen);
+  /*File dataFile = SD.open("datalog.txt", FILE_WRITE);
   // if the file is available, write to it:
   if (dataFile) {
-    dataFile.print(angleopen);
+    dataFile.println(angleopen);
     dataFile.close();
   }
   else {
     Serial.println("error opening datalog.txt");
   }
+*/
   delay(t_delay);
+
 }

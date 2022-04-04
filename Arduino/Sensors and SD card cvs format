@@ -79,6 +79,7 @@ void setSerialNum() {
     randSerialNum();
     writeStringToEEPROM(0, serialnum);
   }
+  
 }
 void clear() {
   for (int i = 0 ; i < EEPROM.length() ; i++) {
@@ -98,7 +99,7 @@ void setup()
   //set serial number
   randomSeed(analogRead(0));
   setSerialNum();
-
+  Serial.println(serialnum);
 
   // DS3231_init(DS3231_CONTROL_INTCN);
   DS3231_init(0);
@@ -114,8 +115,7 @@ void setup()
   DS3231_set(t);
 
 
-  //salinity setup
-  Serial.println("Sal sensor ");
+  //salinity setup  
   analogReference(INTERNAL);
 
 
@@ -264,20 +264,20 @@ void loop()
 {
   //pH
   phReading();
-  Serial.print("sensor = " + String(phValue));
+  Serial.print("ph = " + String(phValue));
 
   //Temperature
   tempReading();
-  Serial.print(" F " + String(Fahrenheit));
+  Serial.print(" F = " + String(Fahrenheit));
 
   //Salinity
   salinityReading();
-  Serial.println("salinity " + String(ppt));
+  Serial.print("salinity " + String(ppt));
 
   //Clock Module
   clockReading();
-  Serial.print("Date : " + String(t.mday) + "/" + String(t.mon) + "/" + String(t.year) + "\t Hour : " + ":" + String(t.hour) + ":" + String(t.min) + "." + String(t.sec));
-
+  Serial.print("Date : " + String(t.mday) + "/" + String(t.mon) + "/" + String(t.year) + " Hour : " + ":" + String(t.hour) + ":" + String(t.min) + "." + String(t.sec));
+  Serial.println();
   //writeToFile();
   delay(500);
 }
