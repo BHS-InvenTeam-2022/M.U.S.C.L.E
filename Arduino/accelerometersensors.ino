@@ -18,9 +18,10 @@ Adafruit_MPU6050 mpu2 = Adafruit_MPU6050();
 
 float deltax1 = 0;
 float deltax2 = 0;
+float angleopen = 0.0;
 float previous1 = NULL;
 float previous2 = NULL;
-float t_delay = 250;
+float t_delay = 1000;
 float t_step = t_delay / 1000; //frequency of reading
 float newval;
 
@@ -79,6 +80,7 @@ float getintegral(float x, float xx, float p_step) {
   return .5 * (x + xx) * p_step;
 }
 
+/*
 void displaySensorDetails(Adafruit_MPU6050 *mpu)
 {
   sensor_t sensor;
@@ -94,6 +96,7 @@ void displaySensorDetails(Adafruit_MPU6050 *mpu)
   Serial.println("");
   delay(500);
 }
+*/
 
 void tcaselect(uint8_t i) {
   if (i > 7) return;
@@ -102,7 +105,7 @@ void tcaselect(uint8_t i) {
   Wire.endTransmission();
 }
 
-void scanPorts() {
+/*void scanPorts() {
   Serial.println("\nTCAScanner ready!");
   for (uint8_t t = 0; t < 8; t++) {
     tcaselect(t);
@@ -118,7 +121,7 @@ void scanPorts() {
     }
   }
   Serial.println("\ndone");
-}
+}*/
 
 
 void setup(void)
@@ -167,20 +170,21 @@ void setup(void)
   */
 
 
-  Serial.print("Initializing SD card...");
+  Serial.print(F("Initializing SD card..."));
   pinMode(chipSelect, OUTPUT);
   digitalWrite(chipSelect, HIGH);
   if (!SD.begin(chipSelect)) {
     Serial.println("initialization failed!");
     while (1);
   }
-  Serial.println(SD.exists("datalog.txt"));
+  //Serial.println(SD.exists("datalog.txt"));
   if (SD.exists("datalog.txt")) {
     Serial.println("file exists\n");
   } else {
     File dataFile = SD.open("datalog.txt", FILE_WRITE);
     // if the file is available, write to it:
     if (dataFile) {
+      dataFile.println("success");
       dataFile.close();
       Serial.println("successfully printed");
     }
@@ -190,7 +194,8 @@ void setup(void)
     }
   }
 
-  Serial.println("SD Card initialization done.\n");
+  Serial.println(F("SD Card initialization done.\n"));
+  
 }
 
 
@@ -210,7 +215,7 @@ void sendpackets() {
 
   dataFile = SD.open("datalog.txt");
   if (!dataFile) {
-    Serial.print("The text file cannot be opened");
+    Serial.print("text file cant be opened");
     while (1);
   }
   while (dataFile.available() && connected) {
@@ -232,6 +237,7 @@ void sendpackets() {
       String message = readString.substring(delimiter_2 + 1 , lengthMessage);
 
       if (message == "OK") {
+        counter++;
         break;
       }
       t_count++;
@@ -248,6 +254,7 @@ void sendpackets() {
 
 void loop(void)
 {
+  
   /* Get a new sensor event */
   sensors_event_t a, g, temp;
 
@@ -259,11 +266,14 @@ void loop(void)
   else {
     newval = getintegral(previous1, g.gyro.y, t_step);
     deltax1 += newval;
+    //bottom code if for formatting for json through pass through serial
+    /*
     char t_buffer[10]; // Enough room for the digits you want and more to be safe
     dtostrf(deltax1, 5, 2, t_buffer);
     char buffer[40];
     sprintf(buffer, "{\"sensor-1\": %s}", t_buffer); //fix later as string library can cause memory fragmentation
     //Serial.println(buffer);
+    */
     previous1 = g.gyro.y;
   }
 
@@ -275,21 +285,27 @@ void loop(void)
   else {
     newval = getintegral(previous2, g.gyro.y, t_step);
     deltax2 += newval;
+    //bottom code is for formatting angles for json to pass through serial
+    /*
     char t_buffer[10]; // Enough room for the digits you want and more to be safe
     dtostrf(deltax2, 5, 2, t_buffer);
     char buffer[40];
     sprintf(buffer, "{\"sensor-2\": %s}", t_buffer); //fix later as string library can cause memory fragmentation
     //Serial.println(buffer);
+    */
     previous2 = g.gyro.y;
   }
 
 
-  float angleopen = deltax2 - deltax1;
-  //Serial.println(angleopen);
+  angleopen = deltax2 - deltax1;
+  Serial.println(angleopen);
 
+  
   File dataFile = SD.open("datalog.txt", FILE_WRITE);
   if (dataFile) {
-    dataFile.println(angleopen);
+    dataFile.print(angleopen);
+    dataFile.print(";");
+    dataFile.print(serialnum);
     dataFile.close();
   }
   else {
