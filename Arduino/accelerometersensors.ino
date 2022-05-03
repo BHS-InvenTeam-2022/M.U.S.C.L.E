@@ -24,7 +24,7 @@ float t_delay = 250;
 float t_step = t_delay / 1000; //frequency of reading
 float newval;
 
-int address = 0;
+int address = 2;
 String letters = "0123456789";
 String serialnum = "";
 
