@@ -327,10 +327,18 @@ void loop()
   //writeToFile();
 
   if(Serial.available()){
-    String incomingString = Serial.readString();
-    if (incomingString.substring(13) == "ALL") {
-      sendpackets();
-    }
+    int delimiter, delimiter_1, delimiter_2, delimiter_3;
+      delimiter = readString.indexOf(",");
+      delimiter_1 = readString.indexOf(",", delimiter + 1);
+      delimiter_2 = readString.indexOf(",", delimiter_1 + 1);
+      delimiter_3 = readString.indexOf(",", delimiter_2 + 1);
+      int lengthMessage = readString.substring(delimiter_1 + 1, delimiter_2).toInt();
+
+      String message = readString.substring(delimiter_2 + 1 , lengthMessage);
+
+      if(message == "ALL"){
+        sendpackets();
+      }
   }
 
   delay(1000);

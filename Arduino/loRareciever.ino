@@ -1,126 +1,181 @@
 unsigned long lastTransmission;
 const int interval = 1000;
- 
+
 bool receiving = false;
 int counter = 0;
 int previous = -1;
 int totalsize = 0;
 int currentsize = 0;
- 
-String incomingString; // added LED blinking till it recieves lora recieve signal, and SD Card button to begin logging --> have to test
- 
+int address = 1;
+int retries = 8;
+
 //SD Card
 #include <SD.h>
 #include <SPI.h>
-const byte chipSelect = 10;
- 
+const byte chipSelect = 4;
+
 #define LED1 3 //red
- 
+
 void setup() {
   Serial.begin(9600);
-  delay(10000);
   pinMode(LED1, LOW);
- 
+
   Serial.print("Initializing SD card...");
-  pinMode(10, OUTPUT);
-  digitalWrite(10, HIGH);
+  pinMode(chipSelect, OUTPUT);
+  digitalWrite(chipSelect, HIGH);
   if (!SD.begin(chipSelect)) {
     Serial.println("initialization failed!");
     while (1);
-    Serial.println("SD Card initialization done.\n");
-    Serial.println(SD.exists("datalog.txt"));
-    if (!SD.exists("datalog.txt")) {
-      File dataFile = SD.open("datalog.txt", FILE_WRITE);
-      // if the file is available, write to it:
-      if (dataFile)
-      {
-        dataFile.print(incomingString.substring(18, 51));
- 
-        dataFile.close();
-        Serial.println("successfully printed");
-      }
-      // if the file isn't open, pop up an error:
-      else {
-        Serial.println("error opening datalog.txt");
-      }
-    }
-    else {
-      Serial.println("file exists\n");
-    }
- 
   }
- 
+  Serial.println("SD Card initialization done.\n");
+  if (!SD.exists("datalog.txt")) {
+    File dataFile = SD.open("datalog.txt", FILE_WRITE);
+    // if the file is available, write to it:
+    if (dataFile)
+    {
+      dataFile.close();
+      Serial.println("successfully printed");
+    }
+    // if the file isn't open, pop up an error:
+    else {
+      Serial.println("error opening datalog.txt");
+    }
+  }
+  else {
+    Serial.println("file exists\n");
+  }
+
 
 }
 
 
-void loop() { 
-  if (!recieving) {
+
+
+void loop() {
+  if (!receiving) {
     String data = "ALL";
     if (millis() > lastTransmission + interval) {
-      Serial.println("AT+SEND=2,35," + data);
+      Serial.println("AT+SEND=" + String(address) + ",3," + data);
       lastTransmission = millis();
     }
- 
+
     if (Serial.available()) {
-      incomingString = Serial.readString();
-      if (incomingString.substring(13, 18) == "size:") {
-        recieving = true;
-        String temp = incomingString.substring(19);
-        totalsize = temp.toInt();
-        currentsize = 0;
-      } else {
-        digitalWrite(LED1, HIGH);
-        delay(250);
-        digitalWrite(LED1, LOW);
-        delay(250);
-        digitalWrite(LED1, HIGH);
-        delay(250);
-        digitalWrite(LED1, LOW);
-        delay(250);
-        continue;
-      }
+      String readString = Serial.readString();
+
+      int delimiter, delimiter_1, delimiter_2, delimiter_3;
+      delimiter = readString.indexOf(",");
+      delimiter_1 = readString.indexOf(",", delimiter + 1);
+      delimiter_2 = readString.indexOf(",", delimiter_1 + 1);
+      delimiter_3 = readString.indexOf(",", delimiter_2 + 1);
+      int lengthMessage = readString.substring(delimiter_1 + 1, delimiter_2).toInt();
+
+      String message = readString.substring(delimiter_2 + 1 , lengthMessage);
+
+      Serial.println(message);
+      //Serial.println(Serial.readString());
+
+      /*if(message.substring(0,3) == "size"){
+        receiving = true;
+        }*/
+
     }
- 
+
+    digitalWrite(LED1, HIGH);
+    delay(250);
+    digitalWrite(LED1, LOW);
+    delay(250);
+    digitalWrite(LED1, HIGH);
+    delay(250);
+    digitalWrite(LED1, LOW);
+    delay(250);
+
   }
   else {
     if (Serial.available()) {
-      incomingString = Serial.readString();
-      String temp = incomingString.substring(incomingString.indexOf("?"));
-      counter = temp.toInt();
-      if(counter - previous == 1){
-        String t_load = incomingString.substring(13, incomingString.indexOf("?"));
-        currentsize = currentsize + sizeof(t_load);
-        File dataFile = SD.open("datalog.txt", FILE_WRITE);      
-        if (dataFile) {
-          dataFile.print(incomingString.substring(13));
-          dataFile.close();
+      String readString = Serial.readString();
+
+      int delimiter, delimiter_1, delimiter_2, delimiter_3;
+      delimiter = readString.indexOf(",");
+      delimiter_1 = readString.indexOf(",", delimiter + 1);
+      delimiter_2 = readString.indexOf(",", delimiter_1 + 1);
+      delimiter_3 = readString.indexOf(",", delimiter_2 + 1);
+      int lengthMessage = readString.substring(delimiter_1 + 1, delimiter_2).toInt();
+
+      String message = readString.substring(delimiter_2 + 1 , lengthMessage);
+      int c_delimiter = readString.indexOf("?");
+      int counter_sent = message.substring(c_delimiter + 1).toInt();
+
+      if (counter_sent > previous) {
+        previous = counter_sent;
+      } else {
+        counter++;
+        if (counter >= retries) {
+          receiving = false;
+          currentsize = 0;
+          totalsize = 0;
+          digitalWrite(LED1, HIGH);
+          delay(100);
+          digitalWrite(LED1, LOW);
+          delay(100);
+          digitalWrite(LED1, HIGH);
+          delay(100);
+          digitalWrite(LED1, LOW);
+          delay(100);
+          digitalWrite(LED1, HIGH);
+          delay(100);
+          digitalWrite(LED1, LOW);
+          delay(100);
+          digitalWrite(LED1, HIGH);
+          delay(100);
+          digitalWrite(LED1, LOW);
+          delay(100);
+          digitalWrite(LED1, HIGH);
+          delay(100);
+          digitalWrite(LED1, LOW);
+          delay(100);
         }
-        else {
-          Serial.println("error opening datalog.txt");
-        }
-        Serial.println("AT+SEND=2,35," + "OK");
-        previous = counter;
+        delay(250);
+        return;
       }
+      //Serial.println(message);
+
+      File dataFile = SD.open("datalog.txt", FILE_WRITE);
+      if (dataFile) {
+        dataFile.println(message);
+        dataFile.close();
+      }
+      else {
+        Serial.println("error opening datalog.txt");
+      }
+
+      digitalWrite(LED1, HIGH);
+      delay(125);
+      digitalWrite(LED1, LOW);
+      delay(125);
+      currentsize = currentsize + sizeof(message);
     }
+
+    if (currentsize == totalsize) {
+      digitalWrite(LED1, HIGH);
+      delay(100);
+      digitalWrite(LED1, LOW);
+      delay(100);
+      digitalWrite(LED1, HIGH);
+      delay(100);
+      digitalWrite(LED1, LOW);
+      delay(100);
+      digitalWrite(LED1, HIGH);
+      delay(100);
+      digitalWrite(LED1, LOW);
+      delay(100);
+
+      receiving = false;
+      currentsize = 0;
+      totalsize = 0;
+    }
+
+
   }
- 
-  if(currentsize == totalsize){
-    digitalWrite(LED1, HIGH);
-    delay(100);
-    digitalWrite(LED1, LOW);
-    delay(100);
-    digitalWrite(LED1, HIGH);
-    delay(100);
-    digitalWrite(LED1, LOW);
-    delay(100);
-    digitalWrite(LED1, HIGH);
-    delay(100);
-    digitalWrite(LED1, LOW);
-    delay(100);
-  } 
- 
- 
+
   delay(100);
- 
 }

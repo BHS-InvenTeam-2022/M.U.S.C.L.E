@@ -3,7 +3,11 @@
 //SD Card
 #include <SD.h>
 #include <SPI.h>
-const byte chipSelect = 4;
+const byte chipSelect = 10;
+
+//LoRa module
+unsigned long lastTransmission;
+const int interval = 1000;
 
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
@@ -69,12 +73,6 @@ void setSerialNum() {
     writeStringToEEPROM(0, serialnum);
   }
 
-}
-
-void clear() {
-  for (int i = 0 ; i < EEPROM.length() ; i++) {
-    EEPROM.write(i, 0);
-  }
 }
 
 float getintegral(float x, float xx, float p_step) {
@@ -161,15 +159,17 @@ void setup(void)
 
 
   /* Display some basic information on this sensor */
-  /*tcaselect(0);
+  /*
+     tcaselect(0);
     displaySensorDetails(&mpu1);
     tcaselect(1);
-    displaySensorDetails(&mpu2);*/
+    displaySensorDetails(&mpu2);
+  */
 
 
   Serial.print("Initializing SD card...");
-  pinMode(10, OUTPUT); // change this to 53 on a mega // don't follow this!!
-  digitalWrite(10, HIGH);
+  pinMode(chipSelect, OUTPUT);
+  digitalWrite(chipSelect, HIGH);
   if (!SD.begin(chipSelect)) {
     Serial.println("initialization failed!");
     while (1);
@@ -193,10 +193,62 @@ void setup(void)
   Serial.println("SD Card initialization done.\n");
 }
 
+
+int counter = 0;
+int retries = 4;//number of seconds to retry for basically timeout connection
+String mybuffer;
+bool connected = false;
+void sendpackets() {
+  File dataFile = SD.open("datalog.txt", FILE_READ);
+  int totalBytes = dataFile.size();
+  String data = "size:" + String(totalBytes);
+  if (millis() > lastTransmission + interval) {
+    Serial.println("AT+SEND=2,35," + data);
+    lastTransmission = millis();
+  }
+  connected = true;
+
+  dataFile = SD.open("datalog.txt");
+  if (!dataFile) {
+    Serial.print("The text file cannot be opened");
+    while (1);
+  }
+  while (dataFile.available() && connected) {
+    mybuffer = dataFile.readStringUntil('\n');
+    if (millis() > lastTransmission + interval) {
+      Serial.println("AT+SEND=2,35," + mybuffer + "?" + String(counter));
+      lastTransmission = millis();
+    }
+
+    int t_count = 0;
+    while (Serial.available() && t_count < retries) {
+      String readString = Serial.readString();
+      int delimiter, delimiter_1, delimiter_2, delimiter_3;
+      delimiter = readString.indexOf(",");
+      delimiter_1 = readString.indexOf(",", delimiter + 1);
+      delimiter_2 = readString.indexOf(",", delimiter_1 + 1);
+      delimiter_3 = readString.indexOf(",", delimiter_2 + 1);
+      int lengthMessage = readString.substring(delimiter_1 + 1, delimiter_2).toInt();
+      String message = readString.substring(delimiter_2 + 1 , lengthMessage);
+
+      if (message == "OK") {
+        break;
+      }
+      t_count++;
+      delay(1000);
+    }
+    if (t_count >= retries) {
+      connected = false;
+    }
+  }
+
+  dataFile.close();
+}
+
+
 void loop(void)
 {
   /* Get a new sensor event */
-
   sensors_event_t a, g, temp;
 
   tcaselect(0);
@@ -211,7 +263,7 @@ void loop(void)
     dtostrf(deltax1, 5, 2, t_buffer);
     char buffer[40];
     sprintf(buffer, "{\"sensor-1\": %s}", t_buffer); //fix later as string library can cause memory fragmentation
-    Serial.println(buffer);
+    //Serial.println(buffer);
     previous1 = g.gyro.y;
   }
 
@@ -227,15 +279,15 @@ void loop(void)
     dtostrf(deltax2, 5, 2, t_buffer);
     char buffer[40];
     sprintf(buffer, "{\"sensor-2\": %s}", t_buffer); //fix later as string library can cause memory fragmentation
-    Serial.println(buffer);
+    //Serial.println(buffer);
     previous2 = g.gyro.y;
   }
 
 
   float angleopen = deltax2 - deltax1;
-  Serial.println(angleopen);
-  /*File dataFile = SD.open("datalog.txt", FILE_WRITE);
-  // if the file is available, write to it:
+  //Serial.println(angleopen);
+
+  File dataFile = SD.open("datalog.txt", FILE_WRITE);
   if (dataFile) {
     dataFile.println(angleopen);
     dataFile.close();
@@ -243,7 +295,23 @@ void loop(void)
   else {
     Serial.println("error opening datalog.txt");
   }
-*/
+
+  if (Serial.available()) {
+    String readString = Serial.readString();
+    int delimiter, delimiter_1, delimiter_2, delimiter_3;
+    delimiter = readString.indexOf(",");
+    delimiter_1 = readString.indexOf(",", delimiter + 1);
+    delimiter_2 = readString.indexOf(",", delimiter_1 + 1);
+    delimiter_3 = readString.indexOf(",", delimiter_2 + 1);
+    int lengthMessage = readString.substring(delimiter_1 + 1, delimiter_2).toInt();
+
+    String message = readString.substring(delimiter_2 + 1 , lengthMessage);
+
+    if (message == "ALL") {
+      sendpackets();
+    }
+  }
+
   delay(t_delay);
 
 }
