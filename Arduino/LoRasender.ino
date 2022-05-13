@@ -1,6 +1,7 @@
 //LoRa module
 unsigned long lastTransmission;
 const int interval = 1000;
+const byte address = 2;
 
 //pH
 const int analogInPin = A2;
@@ -39,9 +40,9 @@ double Vcc;
 const byte chipSelect = 10;
 
 #include <EEPROM.h>
-int address = 0;
 String letters = "0123456789";
 String serialnum = "";
+
 void writeStringToEEPROM(int addrOffset, const String &strToWrite)
 {
   byte len = strToWrite.length();
@@ -84,12 +85,13 @@ void setSerialNum() {
     writeStringToEEPROM(0, serialnum);
   }
 }
-void clear() {
+/*
+  void clear() {
   for (int i = 0 ; i < EEPROM.length() ; i++) {
     EEPROM.write(i, 0);
   }
-}
-
+  }
+*/
 
 void setup()
 {
@@ -119,40 +121,35 @@ void setup()
 
 
   //salinity setup
-  Serial.println("Sal sensor ");
-  analogReference(INTERNAL);
+  //Serial.println("Sal sensor ");
+  //analogReference(INTERNAL);
 
 
-  /*Serial.print("Initializing SD card...");
-    pinMode(10, OUTPUT); // change this to 53 on a mega // don't follow this!!
-    digitalWrite(10, HIGH);
-    if (!SD.begin(chipSelect)) {
+  Serial.print("Initializing SD card...");
+  pinMode(chipSelect, OUTPUT);
+  digitalWrite(chipSelect, HIGH);
+  if (!SD.begin(chipSelect)) {
     Serial.println("initialization failed!");
     while (1);
+  }
 
 
-    Serial.println("SD Card initialization done.\n");
-    Serial.println(SD.exists("datalog.txt"));
-    if (!SD.exists("datalog.txt")) {
+  Serial.println(SD.exists("datalog.txt"));
+  if (!SD.exists("datalog.txt")) {
     File dataFile = SD.open("datalog.txt", FILE_WRITE);
     // if the file is available, write to it:
     if (dataFile) {
-    dataFile.print(Fahrenheit);
-    dataFile.print(Celcius);
-    dataFile.print(phValue);
-
-
-    dataFile.close();
-    Serial.println("successfully printed");
+      //dataFile.close();
+      Serial.println("successfully printed");
     }
     // if the file isn't open, pop up an error:
     else {
-    Serial.println("error opening datalog.txt");
+      Serial.println("error opening datalog.txt");
     }
-    } else {
+  } else {
     Serial.println("file exists\n");
-    }
-    }*/
+  }
+  Serial.println("SD Card initialization done.\n");
 }
 
 
@@ -180,10 +177,7 @@ void phReading() {
   }
   float pHVol = (float)avgValue * 5.0 / 1024 / 6;
   float phValue = -5.70 * pHVol + 21.34;
-
-
 }
-
 
 void tempReading() {
   sensors.requestTemperatures();
@@ -191,19 +185,16 @@ void tempReading() {
   Fahrenheit = sensors.toFahrenheit(Celcius);
 }
 
-
 void clockReading() {
   DS3231_get(&t);
 }
+
 //Calculate the ADC voltage
 long readVcc() {
   long result;
   // Read 1.1V reference against AVcc
   ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
   delay(2); // Wait for Vref to settle
-
-
-
   ADCSRA |= _BV(ADSC); // Convert
   while (bit_is_set(ADCSRA, ADSC));
   result = ADCL;
@@ -218,7 +209,6 @@ void salinityReading() {
   int samples = 20;
   int aRead = 0;
 
-
   for (int i = 0; i < samples ; i++)
   {
     aRead += analogRead(potPin);
@@ -226,8 +216,6 @@ void salinityReading() {
   int aSamples = aRead / samples;
   float voltage = 5.0 * aSamples / 1023; // assuming 5V reference
   // question: would it be better to use the following?: voltage = Vcc * aSamples / 1024
-
-
   ppt = 16.3 * voltage;
 }
 
@@ -272,7 +260,7 @@ void sendpackets() {
   int totalBytes = dataFile.size();
   String data = "size:" + String(totalBytes);
   if (millis() > lastTransmission + interval) {
-    Serial.println("AT+SEND=2,35," + data);
+    Serial.println("AT+SEND=" + String(address) + "," + sizeof(data) + "," + data);
     lastTransmission = millis();
   }
   connected = true;
@@ -285,20 +273,29 @@ void sendpackets() {
   while (dataFile.available() && connected) {
     mybuffer = dataFile.readStringUntil('\n');
     if (millis() > lastTransmission + interval) {
-      Serial.println("AT+SEND=2,35," + mybuffer+"?"+String(counter));
+      String data = mybuffer + "?" + String(counter);
+      Serial.println("AT+SEND=" + String(address) + "," + sizeof(data) + "," + data);
       lastTransmission = millis();
     }
 
     int t_count = 0;
-    while(Serial.available() && t_count<retries){
+    while (Serial.available() && t_count < retries) {
       String incomingString = Serial.readString();
-      if(incomingString.substring(13) == "OK"){//continue sending packets
-        break
+      int delimiter, delimiter_1, delimiter_2, delimiter_3;
+      delimiter = incomingString.indexOf(",");
+      delimiter_1 = incomingString.indexOf(",", delimiter + 1);
+      delimiter_2 = incomingString.indexOf(",", delimiter_1 + 1);
+      delimiter_3 = incomingString.indexOf(",", delimiter_2 + 1);
+      int lengthMessage = incomingString.substring(delimiter_1 + 1, delimiter_2).toInt();
+
+      String message = incomingString.substring(delimiter_2 + 1 , lengthMessage);
+      if (message == "OK") { //continue sending packets
+        break;
       }
       t_count++;
       delay(1000);
     }
-    if(t_count >= retries){
+    if (t_count >= retries) {
       connected = false;
     }
   }
@@ -310,35 +307,36 @@ void loop()
 {
   //pH
   phReading();
-  Serial.print("sensor = " + String(phValue));
+  //Serial.print("ph sensor = " + String(phValue));
 
   //Temperature
   tempReading();
-  Serial.print(" F " + String(Fahrenheit));
+  //Serial.print(" F " + String(Fahrenheit));
 
   //Salinity
   salinityReading();
-  Serial.println(" salinity " + String(ppt));
+  //Serial.println(" salinity " + String(ppt));
 
   //Clock Module
   clockReading();
-  Serial.print("Date : " + String(t.mday) + "/" + String(t.mon) + "/" + String(t.year) + "\t Hour : " + ":" + String(t.hour) + ":" + String(t.min) + "." + String(t.sec));
+  //Serial.print("Date : " + String(t.mday) + "/" + String(t.mon) + "/" + String(t.year) + "\t Hour : " + ":" + String(t.hour) + ":" + String(t.min) + "." + String(t.sec));
 
-  //writeToFile();
+  writeToFile();
 
-  if(Serial.available()){
+  if (Serial.available()) {
+    String incomingString = Serial.readString();
     int delimiter, delimiter_1, delimiter_2, delimiter_3;
-      delimiter = readString.indexOf(",");
-      delimiter_1 = readString.indexOf(",", delimiter + 1);
-      delimiter_2 = readString.indexOf(",", delimiter_1 + 1);
-      delimiter_3 = readString.indexOf(",", delimiter_2 + 1);
-      int lengthMessage = readString.substring(delimiter_1 + 1, delimiter_2).toInt();
+    delimiter = incomingString.indexOf(",");
+    delimiter_1 = incomingString.indexOf(",", delimiter + 1);
+    delimiter_2 = incomingString.indexOf(",", delimiter_1 + 1);
+    delimiter_3 = incomingString.indexOf(",", delimiter_2 + 1);
+    int lengthMessage = incomingString.substring(delimiter_1 + 1, delimiter_2).toInt();
 
-      String message = readString.substring(delimiter_2 + 1 , lengthMessage);
+    String message = incomingString.substring(delimiter_2 + 1 , lengthMessage);
 
-      if(message == "ALL"){
-        sendpackets();
-      }
+    if (message == "ALL") {
+      sendpackets();
+    }
   }
 
   delay(1000);
