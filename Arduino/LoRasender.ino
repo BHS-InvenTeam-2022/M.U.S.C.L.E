@@ -256,9 +256,8 @@ void sendpackets() {
   File dataFile = SD.open("datalog.txt", FILE_READ);
   int totalBytes = dataFile.size();
   String data = "size:" + String(totalBytes);
-  Serial.println(String(sizeof(data)));
   delay(500);
-  Serial.println("AT+SEND=" + String(address) + "," + sizeof(data) + "," + data);
+  Serial.println("AT+SEND=" + String(address) + "," + data.length() + "," + data);
 
   int temp_counter = 0;
   while (temp_counter <= retries) {
@@ -276,7 +275,7 @@ void sendpackets() {
       }
     }
     if (millis() > lastTransmission + 3000) {
-      Serial.println("AT+SEND=" + String(address) + "," + sizeof(data) + "," + data);
+      Serial.println("AT+SEND=" + String(address) + "," + data.length() + "," + data);
       lastTransmission = millis();
     }
   }
@@ -300,7 +299,7 @@ void sendpackets() {
     mybuffer = dataFile.readStringUntil('\n');
     if (millis() > lastTransmission + interval) {
       String data = mybuffer + "?" + String(counter);
-      Serial.println("AT+SEND=" + String(address) + "," + sizeof(data) + "," + data);
+      Serial.println("AT+SEND=" + String(address) + "," + data.length() + "," + data);
       lastTransmission = millis();
       sent = true;
     }

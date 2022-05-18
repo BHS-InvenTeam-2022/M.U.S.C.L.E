@@ -60,14 +60,16 @@ void loop() {
 
       String message = incomingString.substring(delimiter_1 + 1, delimiter_2);
       Serial.println(message);
-      
-      /*if(message.substring(0,4) == "size"){
-            receiving = true;
-            }*/
+      Serial.println(incomingString);
 
+      /*if (message.substring(0, 4) == "size") {
+        receiving = true;
+        delay(500);
+        Serial.println("AT+SEND=1,2,OK");
+      }*/
 
     }
-    
+
     digitalWrite(LED1, HIGH);
     delay(250);
     digitalWrite(LED1, LOW);
