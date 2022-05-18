@@ -21,35 +21,24 @@ void setup() {
   pinMode(LED1, LOW);
 
   Serial.print("Initializing SD card...");
-  pinMode(chipSelect, OUTPUT);
-  digitalWrite(chipSelect, HIGH);
   if (!SD.begin(chipSelect)) {
     Serial.println("initialization failed!");
     while (1);
+  }  
+  File dataFile = SD.open("datalog.txt", FILE_WRITE);
+  // if the file is available, write to it:
+  if (dataFile) {
+    dataFile.close();
+    Serial.println("successfully printed");
+  }
+  // if the file isn't open, pop up an error:
+  else {
+    Serial.println("error opening datalog.txt");
   }
   Serial.println("SD Card initialization done.\n");
-  if (!SD.exists("datalog.txt")) {
-    File dataFile = SD.open("datalog.txt", FILE_WRITE);
-    // if the file is available, write to it:
-    if (dataFile)
-    {
-      dataFile.close();
-      Serial.println("successfully printed");
-    }
-    // if the file isn't open, pop up an error:
-    else {
-      Serial.println("error opening datalog.txt");
-    }
-  }
-  else {
-    Serial.println("file exists\n");
-  }
-
+  
 
 }
-
-
-
 
 void loop() {
   if (!receiving) {

@@ -37,7 +37,7 @@ double Vcc;
 //SD Card
 #include <SD.h>
 #include <SPI.h>
-const byte chipSelect = 10;
+const byte chipSelect = 4;
 
 #include <EEPROM.h>
 String letters = "0123456789";
@@ -85,12 +85,13 @@ void setSerialNum() {
     writeStringToEEPROM(0, serialnum);
   }
 }
+
 /*
-  void clear() {
+void clear() {
   for (int i = 0 ; i < EEPROM.length() ; i++) {
     EEPROM.write(i, 0);
   }
-  }
+}
 */
 
 void setup()
@@ -101,6 +102,7 @@ void setup()
   Wire.begin();
 
 
+  
   //set serial number
   randomSeed(analogRead(0));
   setSerialNum();
@@ -126,29 +128,22 @@ void setup()
 
 
   Serial.print("Initializing SD card...");
-  pinMode(chipSelect, OUTPUT);
-  digitalWrite(chipSelect, HIGH);
   if (!SD.begin(chipSelect)) {
     Serial.println("initialization failed!");
     while (1);
   }
 
-
-  Serial.println(SD.exists("datalog.txt"));
-  if (!SD.exists("datalog.txt")) {
-    File dataFile = SD.open("datalog.txt", FILE_WRITE);
-    // if the file is available, write to it:
-    if (dataFile) {
-      //dataFile.close();
-      Serial.println("successfully printed");
-    }
-    // if the file isn't open, pop up an error:
-    else {
-      Serial.println("error opening datalog.txt");
-    }
-  } else {
-    Serial.println("file exists\n");
+  File dataFile = SD.open("datalog.txt", FILE_WRITE);
+  // if the file is available, write to it:
+  if (dataFile) {
+    dataFile.close();
+    Serial.println("successfully printed");
   }
+  // if the file isn't open, pop up an error:
+  else {
+    Serial.println("error opening datalog.txt");
+  }
+
   Serial.println("SD Card initialization done.\n");
 }
 
@@ -176,7 +171,7 @@ void phReading() {
     avgValue += buf[i];
   }
   float pHVol = (float)avgValue * 5.0 / 1024 / 6;
-  float phValue = -5.70 * pHVol + 21.34;
+  phValue = -5.70 * pHVol + 21.34;
 }
 
 void tempReading() {
@@ -223,12 +218,13 @@ void salinityReading() {
 void writeToFile() {
   File dataFile = SD.open("datalog.txt", FILE_WRITE);
   // if the file is available, write to it:
+  //salinity wasnt added
   if (dataFile) {
     dataFile.print(Fahrenheit);
     dataFile.print(";");
     dataFile.print(phValue);
-    dataFile.print(ppt);
     dataFile.print(";");
+    dataFile.print(ppt);
     dataFile.print(";");
     dataFile.print(t.year);
     dataFile.print("-");
@@ -240,9 +236,9 @@ void writeToFile() {
     dataFile.print(":");
     dataFile.print(t.min);
     dataFile.print(":");
-    dataFile.println(t.sec);
+    dataFile.print(t.sec);
     dataFile.print(";");
-    dataFile.print(serialnum);
+    dataFile.println(serialnum);
     dataFile.close();
   }
   // if the file isn't open, pop up an error:
@@ -305,6 +301,7 @@ void sendpackets() {
 
 void loop()
 {
+
   //pH
   phReading();
   //Serial.print("ph sensor = " + String(phValue));
@@ -314,7 +311,7 @@ void loop()
   //Serial.print(" F " + String(Fahrenheit));
 
   //Salinity
-  salinityReading();
+  //salinityReading();
   //Serial.println(" salinity " + String(ppt));
 
   //Clock Module
