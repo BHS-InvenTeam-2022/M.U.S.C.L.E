@@ -58,7 +58,7 @@ void loop() {
 
       String message = incomingString.substring(delimiter_1 + 1, delimiter_2);
       Serial.println(message);
-      //Serial.println(Serial.readString());
+
 
       /*if(message.substring(0,3) == "size"){
         receiving = true;
@@ -86,11 +86,12 @@ void loop() {
       delimiter_2 = readString.indexOf(",", delimiter_1 + 1);
 
       String message = readString.substring(delimiter_1 + 1, delimiter_2);
-      int c_delimiter = readString.indexOf("?");
+      int c_delimiter = message.indexOf("?");
       int counter_sent = message.substring(c_delimiter + 1).toInt();
 
       if (counter_sent > previous) {
         previous = counter_sent;
+        Serial.println("AT+SEND=1,2,OK");
       } else {
         counter++;
         if (counter >= retries) {
@@ -157,7 +158,6 @@ void loop() {
       currentsize = 0;
       totalsize = 0;
     }
-
 
   }
 

@@ -87,11 +87,11 @@ void setSerialNum() {
 }
 
 /*
-void clear() {
+  void clear() {
   for (int i = 0 ; i < EEPROM.length() ; i++) {
     EEPROM.write(i, 0);
   }
-}
+  }
 */
 
 void setup()
@@ -102,7 +102,7 @@ void setup()
   Wire.begin();
 
 
-  
+
   //set serial number
   randomSeed(analogRead(0));
   setSerialNum();
@@ -248,18 +248,47 @@ void writeToFile() {
 }
 
 int counter = 0;
-int retries = 4;//number of seconds to retry for basically timeout connection
+int retries = 5;//number of seconds to retry for basically timeout connection
 String mybuffer;
 bool connected = false;
+bool sent = false;
 void sendpackets() {
   File dataFile = SD.open("datalog.txt", FILE_READ);
   int totalBytes = dataFile.size();
   String data = "size:" + String(totalBytes);
-  if (millis() > lastTransmission + interval) {
-    Serial.println("AT+SEND=" + String(address) + "," + sizeof(data) + "," + data);
-    lastTransmission = millis();
+  delay(500);
+  Serial.println("AT+SEND=" + String(address) + "," + sizeof(data) + "," + data);
+
+  int temp_counter = 0;
+  while (temp_counter <= retries) {
+    temp_counter++;
+    if (Serial.available()) {
+      String readString = Serial.readString();
+      int delimiter, delimiter_1, delimiter_2;
+      delimiter = readString.indexOf(",");
+      delimiter_1 = readString.indexOf(",", delimiter + 1);
+      delimiter_2 = readString.indexOf(",", delimiter_1 + 1);
+      String message = readString.substring(delimiter_1 + 1, delimiter_2);
+      if (message == "OK") {
+        connected = true;
+        break;
+      }
+    }
+    if (millis() > lastTransmission + 3000) {
+      Serial.println("AT+SEND=" + String(address) + "," + sizeof(data) + "," + data);
+      lastTransmission = millis();
+    }
   }
-  connected = true;
+
+  if (temp_counter >= retries) {
+    counter = 0;
+    connected = false;
+    dataFile.close();
+    return;
+  }
+
+  sent = false;
+  delay(1000);
 
   dataFile = SD.open("datalog.txt");
   if (!dataFile) {
@@ -272,17 +301,18 @@ void sendpackets() {
       String data = mybuffer + "?" + String(counter);
       Serial.println("AT+SEND=" + String(address) + "," + sizeof(data) + "," + data);
       lastTransmission = millis();
+      sent = true;
     }
 
     int t_count = 0;
     while (Serial.available() && t_count < retries) {
       String incomingString = Serial.readString();
       int delimiter, delimiter_1, delimiter_2;
-    delimiter = incomingString.indexOf(",");
-    delimiter_1 = incomingString.indexOf(",", delimiter + 1);
-    delimiter_2 = incomingString.indexOf(",", delimiter_1 + 1);
-    
-    String message = incomingString.substring(delimiter_1 + 1, delimiter_2);
+      delimiter = incomingString.indexOf(",");
+      delimiter_1 = incomingString.indexOf(",", delimiter + 1);
+      delimiter_2 = incomingString.indexOf(",", delimiter_1 + 1);
+
+      String message = incomingString.substring(delimiter_1 + 1, delimiter_2);
       if (message == "OK") { //continue sending packets
         break;
       }
@@ -292,6 +322,7 @@ void sendpackets() {
     if (t_count >= retries) {
       connected = false;
     }
+
   }
 
   dataFile.close();
@@ -324,7 +355,7 @@ void loop()
     delimiter = incomingString.indexOf(",");
     delimiter_1 = incomingString.indexOf(",", delimiter + 1);
     delimiter_2 = incomingString.indexOf(",", delimiter_1 + 1);
-    
+
     String message = incomingString.substring(delimiter_1 + 1, delimiter_2);
 
     if (message == "ALL") {
