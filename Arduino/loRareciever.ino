@@ -49,17 +49,14 @@ void loop() {
     }
 
     if (Serial.available()) {
-      String readString = Serial.readString();
+      String incomingString = Serial.readString();
 
-      int delimiter, delimiter_1, delimiter_2, delimiter_3;
-      delimiter = readString.indexOf(",");
-      delimiter_1 = readString.indexOf(",", delimiter + 1);
-      delimiter_2 = readString.indexOf(",", delimiter_1 + 1);
-      delimiter_3 = readString.indexOf(",", delimiter_2 + 1);
-      int lengthMessage = readString.substring(delimiter_1 + 1, delimiter_2).toInt();
-
-      String message = readString.substring(delimiter_2 + 1 , lengthMessage);
-
+      int delimiter, delimiter_1, delimiter_2;
+    delimiter = incomingString.indexOf(",");
+    delimiter_1 = incomingString.indexOf(",", delimiter + 1);
+    delimiter_2 = incomingString.indexOf(",", delimiter_1 + 1);
+    
+    String message = incomingString.substring(delimiter_1 + 1, delimiter_2);
       Serial.println(message);
       //Serial.println(Serial.readString());
 
@@ -83,14 +80,12 @@ void loop() {
     if (Serial.available()) {
       String readString = Serial.readString();
 
-      int delimiter, delimiter_1, delimiter_2, delimiter_3;
-      delimiter = readString.indexOf(",");
-      delimiter_1 = readString.indexOf(",", delimiter + 1);
-      delimiter_2 = readString.indexOf(",", delimiter_1 + 1);
-      delimiter_3 = readString.indexOf(",", delimiter_2 + 1);
-      int lengthMessage = readString.substring(delimiter_1 + 1, delimiter_2).toInt();
-
-      String message = readString.substring(delimiter_2 + 1 , lengthMessage);
+      int delimiter, delimiter_1, delimiter_2;
+    delimiter = readString.indexOf(",");
+    delimiter_1 = readString.indexOf(",", delimiter + 1);
+    delimiter_2 = readString.indexOf(",", delimiter_1 + 1);
+    
+    String message = readString.substring(delimiter_1 + 1, delimiter_2);
       int c_delimiter = readString.indexOf("?");
       int counter_sent = message.substring(c_delimiter + 1).toInt();
 

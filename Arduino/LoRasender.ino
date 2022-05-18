@@ -277,14 +277,12 @@ void sendpackets() {
     int t_count = 0;
     while (Serial.available() && t_count < retries) {
       String incomingString = Serial.readString();
-      int delimiter, delimiter_1, delimiter_2, delimiter_3;
-      delimiter = incomingString.indexOf(",");
-      delimiter_1 = incomingString.indexOf(",", delimiter + 1);
-      delimiter_2 = incomingString.indexOf(",", delimiter_1 + 1);
-      delimiter_3 = incomingString.indexOf(",", delimiter_2 + 1);
-      int lengthMessage = incomingString.substring(delimiter_1 + 1, delimiter_2).toInt();
-
-      String message = incomingString.substring(delimiter_2 + 1 , lengthMessage);
+      int delimiter, delimiter_1, delimiter_2;
+    delimiter = incomingString.indexOf(",");
+    delimiter_1 = incomingString.indexOf(",", delimiter + 1);
+    delimiter_2 = incomingString.indexOf(",", delimiter_1 + 1);
+    
+    String message = incomingString.substring(delimiter_1 + 1, delimiter_2);
       if (message == "OK") { //continue sending packets
         break;
       }
@@ -322,14 +320,12 @@ void loop()
 
   if (Serial.available()) {
     String incomingString = Serial.readString();
-    int delimiter, delimiter_1, delimiter_2, delimiter_3;
+    int delimiter, delimiter_1, delimiter_2;
     delimiter = incomingString.indexOf(",");
     delimiter_1 = incomingString.indexOf(",", delimiter + 1);
     delimiter_2 = incomingString.indexOf(",", delimiter_1 + 1);
-    delimiter_3 = incomingString.indexOf(",", delimiter_2 + 1);
-    int lengthMessage = incomingString.substring(delimiter_1 + 1, delimiter_2).toInt();
-
-    String message = incomingString.substring(delimiter_2 + 1 , lengthMessage);
+    
+    String message = incomingString.substring(delimiter_1 + 1, delimiter_2);
 
     if (message == "ALL") {
       sendpackets();
