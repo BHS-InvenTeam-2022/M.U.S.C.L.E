@@ -1,5 +1,5 @@
 unsigned long lastTransmission;
-const int interval = 1000;
+const int interval = 3000;
 
 bool receiving = false;
 int counter = 0;
@@ -7,7 +7,7 @@ int previous = -1;
 int totalsize = 0;
 int currentsize = 0;
 int address = 1;
-int retries = 8;
+int retries = 7;
 
 //SD Card
 #include <SD.h>
@@ -50,7 +50,9 @@ void loop() {
 
     if (Serial.available()) {
       String incomingString = Serial.readString();
-
+      if (incomingString == "") {
+        return;
+      }
       int delimiter, delimiter_1, delimiter_2;
       delimiter = incomingString.indexOf(",");
       delimiter_1 = incomingString.indexOf(",", delimiter + 1);
@@ -58,14 +60,14 @@ void loop() {
 
       String message = incomingString.substring(delimiter_1 + 1, delimiter_2);
       Serial.println(message);
+      
+      /*if(message.substring(0,4) == "size"){
+            receiving = true;
+            }*/
 
-
-      /*if(message.substring(0,3) == "size"){
-        receiving = true;
-        }*/
 
     }
-
+    
     digitalWrite(LED1, HIGH);
     delay(250);
     digitalWrite(LED1, LOW);

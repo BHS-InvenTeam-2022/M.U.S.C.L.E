@@ -256,6 +256,7 @@ void sendpackets() {
   File dataFile = SD.open("datalog.txt", FILE_READ);
   int totalBytes = dataFile.size();
   String data = "size:" + String(totalBytes);
+  Serial.println(String(sizeof(data)));
   delay(500);
   Serial.println("AT+SEND=" + String(address) + "," + sizeof(data) + "," + data);
 
