@@ -314,6 +314,7 @@ void sendpackets() {
 
       String message = incomingString.substring(delimiter_1 + 1, delimiter_2);
       if (message == "OK") { //continue sending packets
+        delay(400);
         break;
       }
       t_count++;

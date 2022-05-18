@@ -91,6 +91,7 @@ void loop() {
 
       if (counter_sent > previous) {
         previous = counter_sent;
+        delay(500);
         Serial.println("AT+SEND=1,2,OK");
       } else {
         counter++;
