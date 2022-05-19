@@ -1,6 +1,6 @@
 //LoRa module
 unsigned long lastTransmission;
-const int interval = 1000;
+const int interval = 2000;
 const byte address = 2;
 
 //pH
@@ -248,20 +248,22 @@ void writeToFile() {
 }
 
 int counter = 0;
-int retries = 5;//number of seconds to retry for basically timeout connection
+int retries = 20;//number of seconds to retry for basically timeout connection
 String mybuffer;
 bool connected = false;
-bool sent = false;
+
 void sendpackets() {
   File dataFile = SD.open("datalog.txt", FILE_READ);
   int totalBytes = dataFile.size();
   String data = "size:" + String(totalBytes);
-  delay(500);
+  delay(100);
   Serial.println("AT+SEND=" + String(address) + "," + data.length() + "," + data);
+  delay(1000);
 
   int temp_counter = 0;
   while (temp_counter <= retries) {
     temp_counter++;
+    delay(300);
     if (Serial.available()) {
       String readString = Serial.readString();
       int delimiter, delimiter_1, delimiter_2;
@@ -269,15 +271,17 @@ void sendpackets() {
       delimiter_1 = readString.indexOf(",", delimiter + 1);
       delimiter_2 = readString.indexOf(",", delimiter_1 + 1);
       String message = readString.substring(delimiter_1 + 1, delimiter_2);
+      //Serial.println(message);
       if (message == "OK") {
         connected = true;
         break;
       }
     }
-    if (millis() > lastTransmission + 3000) {
+    if (millis() > lastTransmission + 4000) {
       Serial.println("AT+SEND=" + String(address) + "," + data.length() + "," + data);
       lastTransmission = millis();
     }
+
   }
 
   if (temp_counter >= retries) {
@@ -287,8 +291,8 @@ void sendpackets() {
     return;
   }
 
-  sent = false;
-  delay(1000);
+
+  delay(250);
 
   dataFile = SD.open("datalog.txt");
   if (!dataFile) {
@@ -296,16 +300,19 @@ void sendpackets() {
     while (1);
   }
   while (dataFile.available() && connected) {
+    String mybuffer = "";
     mybuffer = dataFile.readStringUntil('\n');
+    counter++;
     if (millis() > lastTransmission + interval) {
       String data = mybuffer + "?" + String(counter);
+      delay(100);
       Serial.println("AT+SEND=" + String(address) + "," + data.length() + "," + data);
       lastTransmission = millis();
-      sent = true;
     }
+    delay(2100);
 
-    int t_count = 0;
-    while (Serial.available() && t_count < retries) {
+    /*int t_count = 0;
+      while (Serial.available() && t_count < retries) {
       String incomingString = Serial.readString();
       int delimiter, delimiter_1, delimiter_2;
       delimiter = incomingString.indexOf(",");
@@ -319,10 +326,10 @@ void sendpackets() {
       }
       t_count++;
       delay(1000);
-    }
-    if (t_count >= retries) {
+      }
+      if (t_count >= retries) {
       connected = false;
-    }
+      }*/
 
   }
 
@@ -364,5 +371,5 @@ void loop()
     }
   }
 
-  delay(1000);
+  delay(2500);
 }
