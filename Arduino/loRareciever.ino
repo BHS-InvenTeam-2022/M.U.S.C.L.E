@@ -7,7 +7,7 @@ int previous = -1;
 int totalsize = 0;
 int currentsize = 0;
 int address = 1;
-int retries = 7;
+int retries = 15;
 
 //SD Card
 #include <SD.h>
@@ -41,13 +41,14 @@ void setup() {
 }
 
 void loop() {
-  if (!receiving) {
+  if (!receiving) {    
+
     String data = "ALL";
     if (millis() > lastTransmission + interval) {
       Serial.println("AT+SEND=" + String(address) + ",3," + data);
       lastTransmission = millis();
     }
-
+    delay(500);
     if (Serial.available()) {
       String incomingString = Serial.readString();
       if (incomingString == "") {
@@ -59,16 +60,19 @@ void loop() {
       delimiter_2 = incomingString.indexOf(",", delimiter_1 + 1);
 
       String message = incomingString.substring(delimiter_1 + 1, delimiter_2);
-      Serial.println(message);
-      Serial.println(incomingString);
+      //Serial.println(message);
 
-      /*if (message.substring(0, 4) == "size") {
+
+      if (message.substring(0, 4) == "size") {
         receiving = true;
         delay(500);
         Serial.println("AT+SEND=1,2,OK");
-      }*/
+        delay(1500);
+      }
 
     }
+
+    
 
     digitalWrite(LED1, HIGH);
     delay(250);
@@ -90,13 +94,22 @@ void loop() {
       delimiter_2 = readString.indexOf(",", delimiter_1 + 1);
 
       String message = readString.substring(delimiter_1 + 1, delimiter_2);
+
+      if (message.substring(0, 1) == "+" || message == "") {
+        delay(100);
+        return;
+      }
+      if(message.substring(0, 4) == "size"){
+        receiving = false;
+      }
+
       int c_delimiter = message.indexOf("?");
       int counter_sent = message.substring(c_delimiter + 1).toInt();
 
+      Serial.println(message);
+
       if (counter_sent > previous) {
         previous = counter_sent;
-        delay(500);
-        Serial.println("AT+SEND=1,2,OK");
       } else {
         counter++;
         if (counter >= retries) {
@@ -124,10 +137,10 @@ void loop() {
           digitalWrite(LED1, LOW);
           delay(100);
         }
-        delay(250);
+        delay(200);
         return;
       }
-      //Serial.println(message);
+
 
       File dataFile = SD.open("datalog.txt", FILE_WRITE);
       if (dataFile) {
@@ -143,6 +156,7 @@ void loop() {
       digitalWrite(LED1, LOW);
       delay(125);
       currentsize = currentsize + sizeof(message);
+      counter = 0;
     }
 
     if (currentsize == totalsize) {
@@ -166,5 +180,5 @@ void loop() {
 
   }
 
-  delay(100);
+  delay(1500);
 }
