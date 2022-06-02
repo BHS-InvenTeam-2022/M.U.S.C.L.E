@@ -66,7 +66,7 @@ void loop() {
       if (message.substring(0, 4) == "size") {
         receiving = true;
         delay(500);
-        Serial.println("AT+SEND=1,2,OK");
+        Serial.println("AT+SEND=" + String(address) + ",2,OK");
         delay(1500);
       }
 
