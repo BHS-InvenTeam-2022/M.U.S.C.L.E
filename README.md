@@ -6,6 +6,9 @@ The M.U.S.C.L.E is a cost effective, user friendly, water monitoring system that
 Salt marshes are coastal wetlands which yield important ecological services to neighboring coastal ecosystems like, preventing wave energy/storm surges. They are vital for protecting shorelines, acting as a natural barrier from preventing erosion, and filtering runoff from excess nutrients which cause nitrogen loading. However, due to climate change driven sea level rise, and eutrophication, salt marshes are degrading. To restrict progressive destruction from our salt marshes, monitoring environmental factors can help us understand the marsh more and create faster alternatives to preventing environmental damage.
 # The Schematics
 The invention prioritizes Arduino board in a custom 3D printed waterproof-casing; it utilizes ribbed mussels to track the changing environment through monitoring the gape of the shell, or the angle of how much the mussel opens.
+![image](https://user-images.githubusercontent.com/96341453/206934474-8daa9565-e3f2-4739-a47b-5c00c7a6a801.png)
+![image](https://user-images.githubusercontent.com/96341453/206934479-fef61a8f-1297-4cee-b819-03c9925c14df.png)
+![image](https://user-images.githubusercontent.com/96341453/206934492-d288439f-5e01-4848-b00b-7af57c0b6488.png)
 # Last Words
 Prior research was done in the lab, determining that mussels gape less when stressed, caused by lack of food, nearby predators, and certain environmental factors or change. Ribbed mussel biosensor will indicate negative or positive changes in the enviornment. The team aims to target an audience to people who want to contribute in our community as well as pursuing environmental scientists that lack equipment.
 
